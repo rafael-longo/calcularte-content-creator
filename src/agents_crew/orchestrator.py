@@ -1,20 +1,19 @@
 from typing import List, Dict, Any
 from datetime import date
-from src.agents.base import BaseAgent
-from src.agents.brand_strategist import BrandStrategistAgent, ContentPlan, BrandVoiceReport
-from src.agents.creative_director import CreativeDirectorAgent, PostIdea
-from src.agents.copywriter import CopywriterAgent
-from src.agents.art_director import ArtDirectorAgent, ImagePrompt
-from src.agents.reviewer import ReviewerAgent
+from agents import Runner
+from src.agents_crew.brand_strategist import BrandStrategistAgent, ContentPlan, BrandVoiceReport
+from src.agents_crew.creative_director import creative_director_agent, PostIdea
+from src.agents_crew.copywriter import copywriter_agent
+from src.agents_crew.art_director import art_director_agent, ImagePrompt
+from src.agents_crew.reviewer import reviewer_agent
 
-class OrchestratorAgent(BaseAgent):
+class OrchestratorAgent:
     def __init__(self):
-        super().__init__()
         self.brand_strategist = BrandStrategistAgent()
-        self.creative_director = CreativeDirectorAgent()
-        self.copywriter = CopywriterAgent()
-        self.art_director = ArtDirectorAgent()
-        self.reviewer = ReviewerAgent()
+        self.creative_director = creative_director_agent
+        self.copywriter = copywriter_agent
+        self.art_director = art_director_agent
+        self.reviewer = reviewer_agent
 
     def _get_brand_context(self, query: str) -> Dict[str, Any]:
         """Fetches relevant brand context using the BrandStrategistAgent."""
@@ -119,9 +118,37 @@ class OrchestratorAgent(BaseAgent):
         """
         print(f"Orchestrator: Generating {num_ideas} ideas for content pillar: '{content_pillar}'...")
         brand_context = self._get_brand_context(content_pillar)
-        ideas = self.creative_director.brainstorm_ideas(content_pillar, brand_context, num_ideas)
-        print("Orchestrator: Ideas generated.")
-        return ideas
+        
+        # Construct the input for the agent
+        user_input = f"""
+        Content Pillar: '{content_pillar}'
+        Number of Ideas: {num_ideas}
+
+        Brand Context:
+        {self._format_context(brand_context)}
+        """
+
+        # Run the agent using the Agents SDK Runner
+        try:
+            result = Runner.run_sync(self.creative_director, user_input)
+            ideas = result.final_output
+            print("Orchestrator: Ideas generated.")
+            return ideas if ideas else []
+        except Exception as e:
+            print(f"Orchestrator: Error running CreativeDirectorAgent: {e}")
+            return []
+
+    def _format_context(self, context: Dict[str, Any]) -> str:
+        """Helper to format dictionary context into a string for the prompt."""
+        formatted_str = ""
+        for key, value in context.items():
+            if isinstance(value, list):
+                formatted_str += f"- {key.replace('_', ' ').title()}:\n"
+                for item in value:
+                    formatted_str += f"  - {item}\n"
+            else:
+                formatted_str += f"- {key.replace('_', ' ').title()}: {value}\n"
+        return formatted_str.strip()
 
     def develop_post(self, idea: PostIdea, num_image_prompts: int = 3) -> Dict[str, Any]:
         """
@@ -134,18 +161,38 @@ class OrchestratorAgent(BaseAgent):
 
         # Step 2: Generate caption using CopywriterAgent
         print("Orchestrator: Writing caption...")
-        caption = self.copywriter.write_caption(idea.title, idea.defense_of_idea, brand_context)
-        print("Orchestrator: Caption written.")
+        copywriter_input = f"""
+        Idea Title: "{idea.title}"
+        Idea Defense: "{idea.defense_of_idea}"
+
+        Brand Context:
+        {self._format_context(brand_context)}
+        """
+        try:
+            result = Runner.run_sync(self.copywriter, copywriter_input)
+            caption = result.final_output
+            print("Orchestrator: Caption written.")
+        except Exception as e:
+            print(f"Orchestrator: Error running CopywriterAgent: {e}")
+            caption = "Error generating caption."
 
         # Step 3: Generate image prompts using ArtDirectorAgent
         print("Orchestrator: Generating image prompts...")
-        image_prompts = self.art_director.generate_image_prompts(
-            post_concept=idea.title,
-            caption=caption,
-            brand_context=brand_context,
-            num_prompts=num_image_prompts # This will be num_content_prompts + 1 CTA prompt
-        )
-        print("Orchestrator: Image prompts generated.")
+        art_director_input = f"""
+        Post Concept: "{idea.title}"
+        Caption: "{caption}"
+        Number of Prompts: {num_image_prompts}
+
+        Brand Context:
+        {self._format_context(brand_context)}
+        """
+        try:
+            result = Runner.run_sync(self.art_director, art_director_input)
+            image_prompts = result.final_output
+            print("Orchestrator: Image prompts generated.")
+        except Exception as e:
+            print(f"Orchestrator: Error running ArtDirectorAgent: {e}")
+            image_prompts = []
 
         return {
             "idea": idea,
@@ -160,9 +207,33 @@ class OrchestratorAgent(BaseAgent):
         print(f"Orchestrator: Refining {component_type} with user feedback...")
         brand_context = self._get_brand_context(user_feedback) # Get context based on feedback
         
-        revised_content = self.reviewer.refine_content(original_content, user_feedback, brand_context)
-        print(f"Orchestrator: {component_type} refined.")
-        return revised_content
+        reviewer_input = f"""
+        Original Content to revise:
+        ---
+        {original_content}
+        ---
+
+        User Feedback:
+        ---
+        {user_feedback}
+        ---
+
+        Brand Context:
+        ---
+        {self._format_context(brand_context)}
+        ---
+
+        Please provide the revised content.
+        """
+        
+        try:
+            result = Runner.run_sync(self.reviewer, reviewer_input)
+            revised_content = result.final_output
+            print(f"Orchestrator: {component_type} refined.")
+            return revised_content
+        except Exception as e:
+            print(f"Orchestrator: Error running ReviewerAgent: {e}")
+            return "Error refining content."
 
 if __name__ == "__main__":
     # Example usage (for testing purposes)

@@ -6,8 +6,8 @@ import typer
 import os
 from dotenv import load_dotenv
 from scripts.ingest_data import ingest_data
-from src.agents.brand_strategist import BrandStrategistAgent
-from src.agents.orchestrator import OrchestratorAgent, PostIdea
+from src.agents_crew.brand_strategist import BrandStrategistAgent
+from src.agents_crew.orchestrator import OrchestratorAgent, PostIdea
 
 # Load environment variables from .env file
 load_dotenv()
