@@ -1,36 +1,36 @@
 # Active Context: Calcularte Content Engine
 
-**Version:** 1.0
-**Date:** July 12, 2025
+**Version:** 1.1
+**Date:** July 15, 2025
 
 ## 1. Current Focus
 
-The current focus is on the initial setup and planning phase of the "Calcularte Content Engine." The immediate goal is to establish the project structure, document the system specifications, and define the plan for the first phase of development, which will be the command-line interface (CLI) version of the application.
+The current focus has been on the successful implementation of the core backend and command-line interface (CLI) for the "Calcularte Content Engine." This phase involved building out the multi-agent system and integrating it for a complete post-generation workflow.
 
 ## 2. Recent Changes
 
-*   Created the `calcularte-content-creator` GitHub repository.
-*   Initialized a local Git repository.
-*   Updated the `docs/System Specification: Calcularte Content Engine.md` to include references to the raw data files (`dataset_sample.jsonl` and `dataset_instagram_calcularte_profile.jsonl`).
-*   Initialized the Memory Bank by creating the core documentation files:
-    *   `projectbrief.md`
-    *   `productContext.md`
-    *   `systemPatterns.md`
-    *   `techContext.md`
-    *   `activeContext.md`
-    *   `progress.md`
+*   **Full Multi-Agent System Implemented:**
+    *   `src/agents/base.py`: Created a `BaseAgent` class for common LLM interaction and context formatting.
+    *   `src/agents/creative_director.py`: Implemented the `CreativeDirectorAgent` for brainstorming structured post ideas using Pydantic for output.
+    *   `src/agents/copywriter.py`: Implemented the `CopywriterAgent` to write detailed Instagram captions adhering to brand voice and formatting.
+    *   `src/agents/art_director.py`: Implemented the `ArtDirectorAgent` to generate specific image prompts, including a CTA slide.
+    *   `src/agents/reviewer.py`: Implemented the `ReviewerAgent` to refine content based on user feedback.
+    *   `src/agents/orchestrator.py`: Implemented the `OrchestratorAgent` as the central coordinator, fetching brand context and orchestrating calls to other specialist agents for post generation and refinement.
+*   **CLI Updated:** The `src/main.py` CLI now exposes the full post-generation workflow with new commands:
+    *   `generate-ideas <pillar> [--num <n>]`
+    *   `develop-post <idea_title> <idea_pillar> <idea_defense> <idea_results> [--num-images <n>]`
+    *   `refine-content <component_type> <original_content> <user_feedback> [--context-query <query>]`
+*   **Data Ingestion & Brand Strategist Verified:** The `ingest` and `ask-strategist` commands, along with the `BrandStrategistAgent`, were successfully tested and confirmed to be working correctly.
 
 ## 3. Next Steps
 
-The next steps will involve creating the initial project structure for the Python application and beginning the implementation of the core components.
+The core backend and CLI are now fully functional. The next major phase of the project will involve developing the web interface.
 
-1.  **Create Project Structure:** Set up the directory structure for the Python application, including folders for the agent logic, data ingestion scripts, and CLI.
-2.  **Implement Data Ingestion:** Develop the script to load the `dataset_sample.jsonl` file, process the text, and store the embeddings in the ChromaDB vector database.
-3.  **Develop Core Agents:** Begin implementing the `BrandStrategistAgent` and the `OrchestratorAgent` as the foundation of the multi-agent system.
-4.  **Build Initial CLI:** Create a basic command-line interface to test the data ingestion and agent interactions.
+1.  **Develop FastAPI Backend:** Implement the API server in Python using FastAPI to expose endpoints for the frontend to interact with the multi-agent system. This will involve adapting the existing agent functionalities to be callable via HTTP requests.
+2.  **Develop React Frontend:** Build the user interface using React, Tailwind CSS, and DaisyUI, providing a visual way for users to manage content creation.
 
 ## 4. Key Decisions and Considerations
 
-*   **CLI First:** The decision to focus on a CLI version first allows for rapid development and testing of the core logic without the added complexity of a web frontend.
-*   **Local Vector DB:** Using ChromaDB locally simplifies the initial setup and avoids the need for cloud infrastructure, making the project more self-contained.
-*   **Modular Agents:** The multi-agent approach is a key architectural decision that will allow for easier expansion and maintenance of the system in the future.
+*   **Orchestration via Code Confirmed:** The decision to use code-based orchestration for the `OrchestratorAgent` has proven effective for maintaining predictability and control over the complex multi-agent workflow.
+*   **Structured Outputs:** Leveraging Pydantic models for structured outputs from agents (e.g., `PostIdea`, `ImagePrompt`) simplifies data handling and ensures consistency.
+*   **Modular Agent Design:** The clear separation of concerns among agents facilitates development, testing, and future modifications.

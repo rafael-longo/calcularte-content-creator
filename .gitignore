@@ -1,0 +1,37 @@
+# Environment
+.env
+.python-version
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+venv/
+.venv/
+env/
+*.egg-info/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# Database
+chroma_db/
+
+# Datasets (assuming these are local/generated)
+dataset_instagram_calcularte_profile.jsonl
+dataset_sample.jsonl
+
+# Editor-specific files
+.vscode/
+# Keep settings.json and extensions.json if they are meant to be shared
+#.vscode/settings.json
+#.vscode/extensions.json
+
+# OS generated files
+.DS_Store
+.Trashes
+Thumbs.db
+
+# Logs
+*.log
