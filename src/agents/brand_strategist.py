@@ -3,19 +3,30 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import date
 
 # Load environment variables
 load_dotenv()
 
+
 class PlannedPost(BaseModel):
-    day_or_sequence: str # e.g., "Monday", "Post 1"
+    day_or_sequence: str  # e.g., "Monday", "Post 1"
     pillar: str
     reasoning: str
 
+
 class ContentPlan(BaseModel):
     plan: List[PlannedPost]
+
+
+class BrandVoiceReport(BaseModel):
+    executive_summary: str
+    key_content_pillars: List[Dict[str, str]]  # e.g., [{"pillar": "Humor", "description": "..."}]
+    audience_persona_summary: str
+    tone_of_voice_analysis: str
+    language_style_details: str  # Includes emoji and colloquialism usage
+    hashtag_strategy_summary: str
 
 class BrandStrategistAgent:
     def __init__(self):
@@ -93,14 +104,13 @@ class BrandStrategistAgent:
         system_prompt = f"""
         You are a Brand Strategist for 'Calcularte', a brand that helps artisans and crafters with business management.
         Your task is to create a content plan based on the provided context.
-        Return a JSON object that follows this Pydantic model, inside a 'plan' key:
-        class PlannedPost(BaseModel):
-            day_or_sequence: str # e.g., "Monday", "Post 1"
-            pillar: str
-            reasoning: str
+        You MUST return a single, valid JSON object that conforms to the following Pydantic model schema.
+        The JSON object should be inside a 'plan' key.
 
-        class ContentPlan(BaseModel):
-            plan: List[PlannedPost]
+        Pydantic Schema:
+        ```json
+        {ContentPlan.model_json_schema()}
+        ```
 
         Context:
         - {seasonal_context}
@@ -121,23 +131,112 @@ class BrandStrategistAgent:
 
         user_prompt = f"Generate a content plan for the next {time_frame}."
 
-        response = self.client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            response_format={"type": "json_object"}
+        response = self.client.responses.create(
+            model="gpt-4.1-mini",
+            instructions=system_prompt,
+            input=user_prompt
         )
 
         # Manually parse the JSON response into the Pydantic model
         try:
-            response_json = response.choices[0].message.content
+            response_json = response.output_text
             content_plan = ContentPlan.model_validate_json(response_json)
             return content_plan
         except Exception as e:
             print(f"Error parsing content plan from LLM response: {e}")
             return ContentPlan(plan=[])
+
+    def generate_brand_voice_report(self) -> BrandVoiceReport:
+        """
+        Analyzes the brand's voice across the knowledge base and generates a comprehensive report.
+        """
+        if not self.collection:
+            # Handle case where the collection is not available
+            return BrandVoiceReport(
+                executive_summary="Brand voice collection not initialized. Please ingest data first.",
+                key_content_pillars=[],
+                audience_persona_summary="",
+                tone_of_voice_analysis="",
+                language_style_details="",
+                hashtag_strategy_summary=""
+            )
+
+        # 1. Holistic Sampling
+        # Retrieve a diverse sample of posts to form a balanced view.
+        # The `get` method with no filter retrieves all items. We limit it to 30.
+        try:
+            sample_posts = self.collection.get(limit=30, include=['documents', 'metadatas'])
+            # Ensure we have documents to process
+            if not sample_posts or not sample_posts.get('documents'):
+                raise ValueError("No documents found in the collection.")
+        except Exception as e:
+            print(f"Error retrieving sample posts from ChromaDB: {e}")
+            # Return a report indicating the error
+            return BrandVoiceReport(
+                executive_summary=f"Error retrieving data from brand voice collection: {e}",
+                key_content_pillars=[],
+                audience_persona_summary="",
+                tone_of_voice_analysis="",
+                language_style_details="",
+                hashtag_strategy_summary=""
+            )
+
+        # Format the sampled content for the LLM prompt
+        sampled_content_str = "\n".join(
+            [f"- Caption: {doc}\n  Metadata: {meta}" for doc, meta in zip(sample_posts['documents'], sample_posts['metadatas'])]
+        )
+
+        # 2. Synthesize Findings using LLM
+        system_prompt = f"""
+        You are a Brand Strategist for 'Calcularte', a brand focused on helping artisans and crafters with business management.
+        Your task is to perform a holistic analysis of the brand's voice based on a sample of their Instagram posts and generate a comprehensive report.
+
+        You MUST return a single, valid JSON object that conforms to the following Pydantic model schema:
+        ```json
+        {BrandVoiceReport.model_json_schema()}
+        ```
+
+        Sampled Content for Analysis:
+        {sampled_content_str}
+
+        Instructions for Analysis:
+        1.  **Executive Summary:** Start with a high-level summary of the brand's overall voice and communication strategy.
+        2.  **Key Content Pillars:** Analyze the `Sampled Content for Analysis` to identify the main recurring themes or categories of content. For each distinct pillar you identify, provide a "pillar" name and a "description" of what that pillar entails. Examples might include "Educação", "Organização Financeira", "Humor", "Sazonalidade", "Empatia/Motivação", "Produto/Funcionalidade", etc.
+        3.  **Audience Persona:** Describe the target audience ('Calculover') based on the content's language, tone, and topics.
+        4.  **Tone of Voice:** Analyze the overall tone. Is it friendly, professional, humorous, educational?
+        5.  **Language & Style:** Detail the specific language used. Note common emojis, colloquialisms, calls-to-action, and sentence structure.
+        6.  **Hashtag Strategy:** Summarize the approach to using hashtags. Are they for community building, discoverability, or branding?
+
+        **Strict Output Rules:**
+        - You MUST return a single, valid JSON object that conforms to the `BrandVoiceReport` model.
+        - Ensure all fields in the model are populated with insightful analysis.
+        """
+
+        user_prompt = "Generate a comprehensive brand voice report based on the provided content samples."
+
+        response = self.client.responses.create(
+            model="gpt-4.1-mini",
+            instructions=system_prompt,
+            input=user_prompt
+        )
+
+        # Manually parse the JSON response into the Pydantic model
+        try:
+            response_json = response.output_text
+            brand_voice_report = BrandVoiceReport.model_validate_json(response_json)
+            return brand_voice_report
+        except Exception as e:
+            print(f"Error parsing brand voice report from LLM response: {e}")
+            # Fallback to an empty report on parsing failure
+            return BrandVoiceReport(
+                executive_summary=f"Failed to parse LLM response: {e}",
+                key_content_pillars=[],
+                audience_persona_summary="",
+                tone_of_voice_analysis="",
+                language_style_details="",
+                hashtag_strategy_summary=""
+            )
+
 
 if __name__ == "__main__":
     # Example usage (for testing purposes)

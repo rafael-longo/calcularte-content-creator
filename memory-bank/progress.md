@@ -30,13 +30,13 @@
     *   `develop-post`
     *   `refine-content`
 *   **Strategic Content Planning:** The `BrandStrategistAgent` can now generate proactive, strategic content plans based on seasonality and historical data, accessible via the `plan-content` CLI command.
+*   **On-Demand Brand Voice Reporting:** The system can generate a comprehensive, human-readable report on the brand's voice, tone, and style via the `report brand-voice` CLI command.
 
 ## 2. What's Left to Build
 
 The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
 
 **Enhancement Roadmap:**
-2.  **Implement On-Demand Brand Voice Reporting:** Enable the generation of a comprehensive brand guide.
 3.  **Enable Flexible and Autonomous Post Generation:** Introduce powerful `plan` and `plan-and-develop` commands.
 4.  **Deepen Inter-Agent Context Passing:** Make context passing more intelligent and specific.
 5.  **Implement "LLM-as-a-Judge" Quality Loop:** Add an automated quality control step.
@@ -47,7 +47,7 @@ After these enhancements are implemented, the project will proceed to the develo
 
 ## 3. Current Status
 
-The project has successfully completed the first enhancement from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist". The system is now capable of proactive content planning.
+The project has successfully completed the first two enhancements from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist" and "Implement On-Demand Brand Voice Reporting". The system is now capable of proactive content planning and detailed brand voice analysis.
 
 ## 4. Known Issues
 

@@ -13,6 +13,9 @@ from src.agents.orchestrator import OrchestratorAgent, PostIdea
 load_dotenv()
 
 app = typer.Typer()
+report_app = typer.Typer()
+app.add_typer(report_app, name="report")
+
 orchestrator = OrchestratorAgent() # Initialize OrchestratorAgent once
 
 def check_openai_api_key():
@@ -90,6 +93,22 @@ def plan_content_command(
             typer.echo("---")
     else:
         typer.echo("Failed to generate content plan.")
+
+@report_app.command("brand-voice")
+def report_brand_voice_command():
+    """
+    Generates a comprehensive, human-readable report on the brand's voice.
+    """
+    check_openai_api_key()
+    typer.echo("Generating brand voice report...")
+    report = orchestrator.generate_brand_voice_report()
+    
+    if report:
+        typer.echo("\n--- Brand Voice Report ---")
+        typer.echo(report)
+        typer.echo("--------------------------")
+    else:
+        typer.echo("Failed to generate brand voice report.")
 
 @app.command("generate-ideas")
 def generate_ideas_command(

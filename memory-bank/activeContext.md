@@ -22,16 +22,15 @@ The current focus has been on the successful implementation of the core backend 
     *   `develop-post <idea_title> <idea_pillar> <idea_defense> <idea_results> [--num-images <n>]`
     *   `refine-content <component_type> <original_content> <user_feedback> [--context-query <query>]`
 *   **Strategic Planner Implemented:** Enhancement #1 is complete. The `BrandStrategistAgent` can now generate proactive content plans, which are accessible via the new `plan-content` command.
+*   **Brand Voice Reporting Implemented:** Enhancement #2 is complete. The system can now generate a comprehensive brand voice report on demand via the `report brand-voice` command.
 
 ## 3. Next Steps
 
-With the first enhancement complete, the project will now proceed to the next item on the enhancement roadmap.
+With the first two enhancements complete, the project will now proceed to the next item on the enhancement roadmap.
 
-1.  **Implement Enhancement #2:** The immediate next step is to implement the "On-Demand Brand Voice Reporting" enhancement as detailed in:
-    *   `docs/enhancement_plan_2_brand_voice_reporting.md`
+1.  **Implement Enhancement #3:** The immediate next step is to implement the "Enable Flexible and Autonomous Post Generation" enhancement as detailed in:
+    *   `docs/enhancement_plan_3_flexible_generation.md`
 2.  **Continue Roadmap:** After that, continue with the remaining enhancements:
-    *   `docs/enhancement_plan_3_flexible_generation.md`
-    *   `docs/enhancement_plan_3_flexible_generation.md`
     *   `docs/enhancement_plan_4_context_passing.md`
     *   `docs/enhancement_plan_5_llm_as_judge.md`
     *   `docs/enhancement_plan_6_session_memory.md`

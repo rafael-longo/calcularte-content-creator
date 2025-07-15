@@ -76,7 +76,23 @@ python src/main.py plan-content "<time_frame>"
 python src/main.py plan-content "week"
 ```
 
-### 2.3. `ask-strategist` - Query Brand Strategist
+### 2.3. `report brand-voice` - Generate a Brand Voice Report
+
+This command triggers the `BrandStrategistAgent` to perform a holistic analysis of the brand's voice and generates a comprehensive, human-readable report. This is useful for gaining a deep understanding of the brand's communication style at a glance.
+
+**Usage:**
+
+```bash
+python src/main.py report brand-voice
+```
+
+**Example:**
+
+```bash
+python src/main.py report brand-voice
+```
+
+### 2.4. `ask-strategist` - Query Brand Strategist
 
 This command allows you to query the `BrandStrategistAgent` to retrieve content from the brand's historical data that is semantically similar to your query. This is useful for understanding the brand's tone, style, and relevant topics.
 
@@ -94,7 +110,7 @@ python src/main.py ask-strategist "<your_query_text>"
 python src/main.py ask-strategist "Como organizar as finanças do meu negócio artesanal?"
 ```
 
-### 2.4. `generate-ideas` - Generate New Post Ideas
+### 2.5. `generate-ideas` - Generate New Post Ideas
 
 This command uses the `CreativeDirectorAgent` (orchestrated by the `OrchestratorAgent`) to brainstorm new Instagram post concepts based on a specified content pillar.
 
@@ -113,7 +129,7 @@ python src/main.py generate-ideas "<content_pillar>" [--num <number_of_ideas>]
 python src/main.py generate-ideas "Produtividade para Artesãs" --num 2
 ```
 
-### 2.4. `develop-post` - Develop a Full Post
+### 2.6. `develop-post` - Develop a Full Post
 
 This command takes a selected post idea (title, pillar, defense, and expected results) and uses the `OrchestratorAgent` to generate a complete Instagram caption (via `CopywriterAgent`) and a series of detailed image prompts (via `ArtDirectorAgent`).
 
@@ -137,7 +153,7 @@ python src/main.py develop-post "<idea_title>" "<idea_pillar>" "<idea_defense>" 
 python src/main.py develop-post "Descomplicando a Precificação: Seu Lucro na Ponta do Lápis!" "Precificação" "Este post oferece dicas práticas e mostra como o Calcularte simplifica a precificação para artesãs." "Aumentar o engajamento e direcionar tráfego para o Calcularte." --num-images 2
 ```
 
-### 2.6. `refine-content` - Refine Content with Feedback
+### 2.7. `refine-content` - Refine Content with Feedback
 
 This command allows you to refine a specific piece of generated content (like a caption or an image prompt) using the `ReviewerAgent` (orchestrated by the `OrchestratorAgent`) based on your feedback.
 
