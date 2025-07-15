@@ -17,18 +17,20 @@ The current focus has been on the successful implementation of the core backend 
     *   `src/agents/reviewer.py`: Implemented the `ReviewerAgent` to refine content based on user feedback.
     *   `src/agents/orchestrator.py`: Implemented the `OrchestratorAgent` as the central coordinator, fetching brand context and orchestrating calls to other specialist agents for post generation and refinement.
 *   **CLI Updated:** The `src/main.py` CLI now exposes the full post-generation workflow with new commands:
+    *   `plan-content <time_frame>`
     *   `generate-ideas <pillar> [--num <n>]`
     *   `develop-post <idea_title> <idea_pillar> <idea_defense> <idea_results> [--num-images <n>]`
     *   `refine-content <component_type> <original_content> <user_feedback> [--context-query <query>]`
-*   **Data Ingestion & Brand Strategist Verified:** The `ingest` and `ask-strategist` commands, along with the `BrandStrategistAgent`, were successfully tested and confirmed to be working correctly.
+*   **Strategic Planner Implemented:** Enhancement #1 is complete. The `BrandStrategistAgent` can now generate proactive content plans, which are accessible via the new `plan-content` command.
 
 ## 3. Next Steps
 
-With the initial CLI implementation complete, the project is now moving into a phase of strategic enhancement. The immediate next steps are to implement the features outlined in the new enhancement roadmap.
+With the first enhancement complete, the project will now proceed to the next item on the enhancement roadmap.
 
-1.  **Implement Enhancement Roadmap:** Sequentially implement the seven planned enhancements as detailed in the following documents:
-    *   `docs/enhancement_plan_1_true_strategist.md`
+1.  **Implement Enhancement #2:** The immediate next step is to implement the "On-Demand Brand Voice Reporting" enhancement as detailed in:
     *   `docs/enhancement_plan_2_brand_voice_reporting.md`
+2.  **Continue Roadmap:** After that, continue with the remaining enhancements:
+    *   `docs/enhancement_plan_3_flexible_generation.md`
     *   `docs/enhancement_plan_3_flexible_generation.md`
     *   `docs/enhancement_plan_4_context_passing.md`
     *   `docs/enhancement_plan_5_llm_as_judge.md`

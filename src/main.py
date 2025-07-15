@@ -70,6 +70,27 @@ def ask_strategist_command(
     else:
         typer.echo("Brand Strategist Agent not ready. Please run 'ingest' command first.")
 
+@app.command("plan-content")
+def plan_content_command(
+    time_frame: str = typer.Argument(..., help="The time frame for the content plan (e.g., 'week', 'month').")
+):
+    """
+    Generates a strategic content plan using the Orchestrator Agent.
+    """
+    check_openai_api_key()
+    typer.echo(f"Generating content plan for the next '{time_frame}'...")
+    plan = orchestrator.plan_content(time_frame)
+    
+    if plan and plan.plan:
+        typer.echo("\n--- Strategic Content Plan ---")
+        for post in plan.plan:
+            typer.echo(f"Day/Sequence: {post.day_or_sequence}")
+            typer.echo(f"  Pillar: {post.pillar}")
+            typer.echo(f"  Reasoning: {post.reasoning}")
+            typer.echo("---")
+    else:
+        typer.echo("Failed to generate content plan.")
+
 @app.command("generate-ideas")
 def generate_ideas_command(
     pillar: str = typer.Argument(..., help="The content pillar for which to generate ideas."),

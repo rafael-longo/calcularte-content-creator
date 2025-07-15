@@ -58,7 +58,25 @@ python src/main.py ingest [--sample | --full]
 python src/main.py ingest --sample
 ```
 
-### 2.2. `ask-strategist` - Query Brand Strategist
+### 2.2. `plan-content` - Generate a Strategic Content Plan
+
+This command leverages the enhanced `BrandStrategistAgent` to generate a proactive, strategic content plan for a specified time frame. It considers seasonality, historical performance, and content variety.
+
+**Usage:**
+
+```bash
+python src/main.py plan-content "<time_frame>"
+```
+
+*   `<time_frame>`: The duration for the content plan (e.g., "week", "month", "quarter"). Enclose in quotes if it contains spaces.
+
+**Example:**
+
+```bash
+python src/main.py plan-content "week"
+```
+
+### 2.3. `ask-strategist` - Query Brand Strategist
 
 This command allows you to query the `BrandStrategistAgent` to retrieve content from the brand's historical data that is semantically similar to your query. This is useful for understanding the brand's tone, style, and relevant topics.
 
@@ -76,7 +94,7 @@ python src/main.py ask-strategist "<your_query_text>"
 python src/main.py ask-strategist "Como organizar as finanças do meu negócio artesanal?"
 ```
 
-### 2.3. `generate-ideas` - Generate New Post Ideas
+### 2.4. `generate-ideas` - Generate New Post Ideas
 
 This command uses the `CreativeDirectorAgent` (orchestrated by the `OrchestratorAgent`) to brainstorm new Instagram post concepts based on a specified content pillar.
 
@@ -119,7 +137,7 @@ python src/main.py develop-post "<idea_title>" "<idea_pillar>" "<idea_defense>" 
 python src/main.py develop-post "Descomplicando a Precificação: Seu Lucro na Ponta do Lápis!" "Precificação" "Este post oferece dicas práticas e mostra como o Calcularte simplifica a precificação para artesãs." "Aumentar o engajamento e direcionar tráfego para o Calcularte." --num-images 2
 ```
 
-### 2.5. `refine-content` - Refine Content with Feedback
+### 2.6. `refine-content` - Refine Content with Feedback
 
 This command allows you to refine a specific piece of generated content (like a caption or an image prompt) using the `ReviewerAgent` (orchestrated by the `OrchestratorAgent`) based on your feedback.
 

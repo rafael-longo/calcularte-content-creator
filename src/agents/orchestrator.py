@@ -1,6 +1,7 @@
 from typing import List, Dict, Any
+from datetime import date
 from src.agents.base import BaseAgent
-from src.agents.brand_strategist import BrandStrategistAgent
+from src.agents.brand_strategist import BrandStrategistAgent, ContentPlan
 from src.agents.creative_director import CreativeDirectorAgent, PostIdea
 from src.agents.copywriter import CopywriterAgent
 from src.agents.art_director import ArtDirectorAgent, ImagePrompt
@@ -43,6 +44,22 @@ class OrchestratorAgent(BaseAgent):
         
         print("Orchestrator: Brand context fetched.")
         return brand_context
+
+    def plan_content(self, time_frame: str) -> ContentPlan:
+        """
+        Generates a strategic content plan by coordinating with the BrandStrategistAgent.
+        """
+        print(f"Orchestrator: Generating content plan for '{time_frame}'...")
+        # In a real application, you might fetch recent post themes from a database.
+        # For this example, we'll pass None.
+        current_date = date.today()
+        content_plan = self.brand_strategist.propose_content_plan(
+            time_frame=time_frame,
+            current_date=current_date,
+            recent_post_themes=None 
+        )
+        print("Orchestrator: Content plan generated.")
+        return content_plan
 
     def generate_ideas(self, content_pillar: str, num_ideas: int = 3) -> List[PostIdea]:
         """
@@ -99,7 +116,18 @@ if __name__ == "__main__":
     # Example usage (for testing purposes)
     orchestrator = OrchestratorAgent()
 
-    # Test 1: Generate Ideas
+    # Test 1: Plan Content
+    print("\n--- Testing Content Planning ---")
+    plan = orchestrator.plan_content("week")
+    if plan and plan.plan:
+        print("\n--- Content Plan Received ---")
+        for post in plan.plan:
+            print(f"- Day/Seq: {post.day_or_sequence}, Pillar: {post.pillar}, Reasoning: {post.reasoning}")
+    else:
+        print("Could not generate a content plan.")
+
+
+    # Test 2: Generate Ideas
     print("\n--- Testing Idea Generation ---")
     ideas = orchestrator.generate_ideas("Organização Financeira", num_ideas=1)
     if ideas:

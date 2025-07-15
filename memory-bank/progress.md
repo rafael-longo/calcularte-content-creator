@@ -25,16 +25,17 @@
 *   **Command-Line Interface (CLI):** The `src/main.py` CLI provides commands for:
     *   `ingest`
     *   `ask-strategist`
+    *   `plan-content`
     *   `generate-ideas`
     *   `develop-post`
     *   `refine-content`
+*   **Strategic Content Planning:** The `BrandStrategistAgent` can now generate proactive, strategic content plans based on seasonality and historical data, accessible via the `plan-content` CLI command.
 
 ## 2. What's Left to Build
 
-The initial CLI-based version of the multi-agent system is complete. The next phase of development will focus on implementing a series of strategic enhancements to evolve the system's capabilities, as outlined in the `docs/` directory.
+The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
 
 **Enhancement Roadmap:**
-1.  **Evolve BrandStrategistAgent to True Strategist:** Transform the agent from a retriever to a proactive planner.
 2.  **Implement On-Demand Brand Voice Reporting:** Enable the generation of a comprehensive brand guide.
 3.  **Enable Flexible and Autonomous Post Generation:** Introduce powerful `plan` and `plan-and-develop` commands.
 4.  **Deepen Inter-Agent Context Passing:** Make context passing more intelligent and specific.
@@ -46,7 +47,7 @@ After these enhancements are implemented, the project will proceed to the develo
 
 ## 3. Current Status
 
-The project has successfully completed its initial implementation and has now defined a clear roadmap for the next phase of enhancements. All planning documents for this roadmap have been created.
+The project has successfully completed the first enhancement from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist". The system is now capable of proactive content planning.
 
 ## 4. Known Issues
 
