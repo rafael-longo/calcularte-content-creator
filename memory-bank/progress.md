@@ -31,14 +31,22 @@
 
 ## 2. What's Left to Build
 
-The core backend and CLI functionalities are complete. The next major phase is the development of the web interface.
+The initial CLI-based version of the multi-agent system is complete. The next phase of development will focus on implementing a series of strategic enhancements to evolve the system's capabilities, as outlined in the `docs/` directory.
 
-*   **FastAPI Backend:** Implement the API server to expose the agent functionalities via HTTP endpoints.
-*   **React Frontend:** Build the web user interface for a user-friendly content creation experience.
+**Enhancement Roadmap:**
+1.  **Evolve BrandStrategistAgent to True Strategist:** Transform the agent from a retriever to a proactive planner.
+2.  **Implement On-Demand Brand Voice Reporting:** Enable the generation of a comprehensive brand guide.
+3.  **Enable Flexible and Autonomous Post Generation:** Introduce powerful `plan` and `plan-and-develop` commands.
+4.  **Deepen Inter-Agent Context Passing:** Make context passing more intelligent and specific.
+5.  **Implement "LLM-as-a-Judge" Quality Loop:** Add an automated quality control step.
+6.  **Implement Persistent Session Memory:** Make the CLI stateful using the SDK's `SQLiteSession`.
+7.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
+
+After these enhancements are implemented, the project will proceed to the development of the web interface (FastAPI backend and React frontend).
 
 ## 3. Current Status
 
-The project has successfully completed its initial phase, which focused on building a robust, command-line usable backend with a fully implemented multi-agent content generation system. The foundation is solid for proceeding to the web interface development.
+The project has successfully completed its initial implementation and has now defined a clear roadmap for the next phase of enhancements. All planning documents for this roadmap have been created.
 
 ## 4. Known Issues
 

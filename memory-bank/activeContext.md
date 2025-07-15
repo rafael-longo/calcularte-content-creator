@@ -24,10 +24,17 @@ The current focus has been on the successful implementation of the core backend 
 
 ## 3. Next Steps
 
-The core backend and CLI are now fully functional. The next major phase of the project will involve developing the web interface.
+With the initial CLI implementation complete, the project is now moving into a phase of strategic enhancement. The immediate next steps are to implement the features outlined in the new enhancement roadmap.
 
-1.  **Develop FastAPI Backend:** Implement the API server in Python using FastAPI to expose endpoints for the frontend to interact with the multi-agent system. This will involve adapting the existing agent functionalities to be callable via HTTP requests.
-2.  **Develop React Frontend:** Build the user interface using React, Tailwind CSS, and DaisyUI, providing a visual way for users to manage content creation.
+1.  **Implement Enhancement Roadmap:** Sequentially implement the seven planned enhancements as detailed in the following documents:
+    *   `docs/enhancement_plan_1_true_strategist.md`
+    *   `docs/enhancement_plan_2_brand_voice_reporting.md`
+    *   `docs/enhancement_plan_3_flexible_generation.md`
+    *   `docs/enhancement_plan_4_context_passing.md`
+    *   `docs/enhancement_plan_5_llm_as_judge.md`
+    *   `docs/enhancement_plan_6_session_memory.md`
+    *   `docs/enhancement_plan_7_interactive_refinement.md`
+2.  **Future Phase: Web Interface:** Once the core system is enhanced, the project will proceed with the development of the FastAPI backend and the React frontend.
 
 ## 4. Key Decisions and Considerations
 
