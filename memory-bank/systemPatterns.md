@@ -17,6 +17,7 @@ The system is designed with a modular, multi-agent architecture to separate conc
 *   **Single Source of Truth:** The `BrandStrategistAgent` serves as the sole guardian of brand knowledge. All context and brand-related information are funneled through this agent, preventing inconsistencies and ensuring a unified brand voice.
 *   **Semantic Caching (Vector Database):** The `BrandVoiceCore` (ChromaDB) acts as a semantic cache for the brand's historical content. This allows for efficient, meaning-based retrieval of brand voice examples, which is more powerful than simple keyword matching.
 *   **Structured Outputs:** Pydantic models are used to define the expected output format for agents like `CreativeDirectorAgent` and `ArtDirectorAgent`, ensuring consistent and machine-readable results.
+*   **Strict Schema Compliance:** To guarantee the reliability of our agentic system, all Pydantic models used for agent outputs or tool inputs **MUST** adhere to the strict schema rules enforced by the OpenAI Agents SDK. This is a non-negotiable principle. For detailed rules and implementation guidance, see the canonical document: [Strict Pydantic Model Compliance for Agent Outputs](./pydantic_strict_schema_rule.md).
 
 ## 3. Component Relationships
 

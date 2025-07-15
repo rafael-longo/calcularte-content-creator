@@ -20,13 +20,17 @@ class PlannedPost(BaseModel):
 class ContentPlan(BaseModel):
     plan: List[PlannedPost]
 
+class ContentPillarDetail(BaseModel):
+    pillar: str
+    description: str
 
 class BrandVoiceReport(BaseModel):
     executive_summary: str
-    key_content_pillars: List[Dict[str, str]]  # e.g., [{"pillar": "Humor", "description": "..."}]
+    key_content_pillars: List[ContentPillarDetail]  # e.g., [{"pillar": "Humor", "description": "..."}]
     audience_persona_summary: str
     tone_of_voice_analysis: str
     language_style_details: str  # Includes emoji and colloquialism usage
+    country_culture_details: str
     hashtag_strategy_summary: str
 
 # --- Agent Definitions ---
@@ -69,9 +73,10 @@ Instructions for Analysis:
 1.  **Executive Summary:** Start with a high-level summary of the brand's overall voice and communication strategy.
 2.  **Key Content Pillars:** Analyze the `Sampled Content for Analysis` to identify the main recurring themes or categories of content. For each distinct pillar you identify, provide a "pillar" name and a "description" of what that pillar entails. Examples might include "Educação", "Organização Financeira", "Humor", "Sazonalidade", "Empatia/Motivação", "Produto/Funcionalidade", etc.
 3.  **Audience Persona:** Describe the target audience ('Calculover') based on the content's language, tone, and topics.
-4.  **Tone of Voice:** Analyze the overall tone. Is it friendly, professional, humorous, educational?
-5.  **Language & Style:** Detail the specific language used. Note common emojis, colloquialisms, calls-to-action, and sentence structure.
-6.  **Hashtag Strategy:** Summarize the approach to using hashtags. Are they for community building, discoverability, or branding?
+4.  **Tone of Voice:** Analyze the overall tone. Is it friendly, professional, humorous, educational? Include examples.
+5.  **Language & Style:** Detail the specific language used. Note common emojis, colloquialisms, calls-to-action, and sentence structure. Include examples.
+6.  **Country & Culture:** Mention any cultural nuances or references.
+7.  **Hashtag Strategy:** Summarize the approach to using hashtags. Are they for community building, discoverability, or branding?
 
 **Strict Output Rules:**
 - You MUST return a single, valid JSON object that conforms to the `BrandVoiceReport` model.
@@ -173,14 +178,14 @@ class BrandStrategistAgent:
         Analyzes the brand's voice and generates a report using the brand_reporter_agent.
         """
         if not self.collection:
-            return BrandVoiceReport(executive_summary="Brand voice collection not initialized.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", hashtag_strategy_summary="")
+            return BrandVoiceReport(executive_summary="Brand voice collection not initialized.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
 
         try:
-            sample_posts = self.collection.get(limit=30, include=['documents', 'metadatas'])
+            sample_posts = self.collection.get(limit=100, include=['documents', 'metadatas'])
             if not sample_posts or not sample_posts.get('documents'):
                 raise ValueError("No documents found in the collection.")
         except Exception as e:
-            return BrandVoiceReport(executive_summary=f"Error retrieving data: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", hashtag_strategy_summary="")
+            return BrandVoiceReport(executive_summary=f"Error retrieving data: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
 
         sampled_content_str = "\n".join(
             [f"- Caption: {doc}\n  Metadata: {meta}" for doc, meta in zip(sample_posts['documents'], sample_posts['metadatas'])]
@@ -198,10 +203,10 @@ class BrandStrategistAgent:
 
         try:
             result = Runner.run_sync(brand_reporter_agent, user_input)
-            return result.final_output if result.final_output else BrandVoiceReport(executive_summary="Failed to generate report.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", hashtag_strategy_summary="")
+            return result.final_output if result.final_output else BrandVoiceReport(executive_summary="Failed to generate report.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
         except Exception as e:
             print(f"Error running brand_reporter_agent: {e}")
-            return BrandVoiceReport(executive_summary=f"Error generating report: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", hashtag_strategy_summary="")
+            return BrandVoiceReport(executive_summary=f"Error generating report: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
 
 
 if __name__ == "__main__":

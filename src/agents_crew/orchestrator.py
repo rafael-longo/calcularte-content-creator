@@ -86,7 +86,7 @@ class OrchestratorAgent:
 ## **2. Key Content Pillars**
 """
         for pillar in report_data.key_content_pillars:
-            markdown_report += f"- **{pillar.get('pillar', 'N/A')}:** {pillar.get('description', 'No description provided.')}\n"
+            markdown_report += f"- **{pillar.pillar}:** {pillar.description}\n"
 
         markdown_report += f"""
 ---
@@ -106,7 +106,12 @@ class OrchestratorAgent:
 
 ---
 
-## **6. Hashtag Strategy Summary**
+## **6. Country & Culture Details**
+{report_data.country_culture_details}
+
+---
+
+## **7. Hashtag Strategy Summary**
 {report_data.hashtag_strategy_summary}
 """
         print("Orchestrator: Report formatted.")

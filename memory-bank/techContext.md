@@ -7,7 +7,7 @@
 
 *   **Language:** Python 3.11.8 (Managed by `pyenv`)
 *   **Backend Framework:** FastAPI (Planned for next phase)
-*   **Agent/LLM Framework:** OpenAI's Agents SDK (Core logic implemented)
+*   **Agent/LLM Framework:** OpenAI's Agents SDK. This is the exclusive framework for all agent-related development. Direct use of lower-level client APIs is forbidden by project rules. See [.clinerules/sdk-usage-rules.md](../.clinerules/sdk-usage-rules.md).
 *   **Vector Database:** ChromaDB (Implemented and functional)
 *   **Embedding Model:** OpenAI's `text-embedding-3-small`
 *   **Core LLM:** `gpt-4.1-mini` (via OpenAI API)
