@@ -32,11 +32,15 @@ The current focus has been on the successful implementation of the core backend 
 
 ## 3. Next Steps
 
-With the first six enhancements complete, the project will now proceed to the final item on the core enhancement roadmap.
+With the first six enhancements complete, the project will now proceed to the remaining items on the core enhancement roadmap.
 
-1.  **Implement Enhancement #7:** The immediate next step is to implement an "Interactive CLI Refinement Loop" to make the content refinement process conversational, as detailed in:
-    *   `docs/enhancement_plan_7_interactive_refinement.md`
-2.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
+1.  **Implement Enhancement #7: Robust Session Management:** The immediate next step is to implement persistent, file-based sessions that start automatically and include safeguards against excessive context length. This is a foundational requirement for all subsequent conversational features.
+    *   `docs/enhancement_plan_7_robust_session_management.md`
+2.  **Implement Enhancement #8: Autonomous Maestro Agent:** Create a single, powerful, conversational entry point to the system (maestro command) managed by an autonomous MaestroAgent. This agent will interpret high-level user prompts and orchestrate the system's full capabilities by using specialist agents and functions as tools.
+    *   `docs/enhancement_plan_8_autonomous_maestro_orchestrator.md`
+3.  **Implement Enhancement #9: Interactive CLI Refinement Loop:** Make the refinement process conversational.
+    *   `docs/enhancement_plan_9_interactive_refinement.md`
+4.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
 
 ## 4. Key Decisions and Considerations
 

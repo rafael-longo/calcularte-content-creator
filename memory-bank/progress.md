@@ -45,9 +45,11 @@
 The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
 
 **Enhancement Roadmap:**
-7.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
+7.  **Implement Robust Session Management:** Make the CLI stateful, safe, and user-friendly by implementing persistent, file-based sessions that start automatically and include safeguards against excessive context length.
+8.  **Implement the Autonomous Maestro Agent:** Create a single, powerful, conversational entry point to the system (maestro command) managed by an autonomous MaestroAgent. This agent will interpret high-level user prompts and orchestrate the system's full capabilities by using specialist agents and functions as tools.
+9.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
 
-After this enhancement is implemented, the project will proceed to the development of the web interface (FastAPI backend and React frontend).
+After these enhancements are implemented, the project will proceed to the development of the web interface (FastAPI backend and React frontend).
 
 ## 3. Current Status
 
