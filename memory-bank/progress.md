@@ -35,13 +35,13 @@
 *   **Flexible and Autonomous Post Generation:** The system can now autonomously plan and develop content from start to finish using the `plan` and `plan-and-develop` commands. The `OrchestratorAgent` and `CreativeDirectorAgent` have been enhanced to support this workflow.
 *   **Strategic Content Planning:** The `BrandStrategistAgent` can now generate proactive, strategic content plans based on seasonality and historical data, accessible via the `plan-content` CLI command.
 *   **On-Demand Brand Voice Reporting:** The system can generate a comprehensive, human-readable report on the brand's voice, tone, and style via the `report brand-voice` CLI command.
+*   **Deepened Inter-Agent Context Passing:** The `OrchestratorAgent` now provides more focused, specialized context to the `CopywriterAgent` by leveraging a new `get_specialized_context` method in the `BrandStrategistAgent`, enhancing the relevance of generated content.
 
 ## 2. What's Left to Build
 
 The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
 
 **Enhancement Roadmap:**
-4.  **Deepen Inter-Agent Context Passing:** Make context passing more intelligent and specific.
 5.  **Implement "LLM-as-a-Judge" Quality Loop:** Add an automated quality control step.
 6.  **Implement Persistent Session Memory:** Make the CLI stateful using the SDK's `SQLiteSession`.
 7.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
@@ -50,7 +50,7 @@ After these enhancements are implemented, the project will proceed to the develo
 
 ## 3. Current Status
 
-The project has successfully completed the first three enhancements from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist", "Implement On-Demand Brand Voice Reporting", and "Enable Flexible and Autonomous Post Generation". The system is now capable of fully autonomous content creation, from high-level planning to final post development.
+The project has successfully completed the first four enhancements from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist", "Implement On-Demand Brand Voice Reporting", "Enable Flexible and Autonomous Post Generation", and "Deepen Inter-Agent Context Passing". The system's internal context handling is now more intelligent, leading to higher-quality outputs.
 
 ## 4. Known Issues
 

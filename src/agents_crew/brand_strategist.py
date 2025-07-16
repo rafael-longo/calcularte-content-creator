@@ -137,6 +137,21 @@ class BrandStrategistAgent:
         
         return relevant_content
 
+    def get_specialized_context(self, context_type: str, query: str, num_samples: int = 3) -> List[str]:
+        """
+        Retrieves specialized context from the vector database based on a type and query.
+        """
+        if not self.collection:
+            return ["Brand voice collection not initialized. Please ingest data."]
+
+        # Craft a more specific query for the vector database
+        specialized_query = f"Find examples of '{context_type}' related to the topic: '{query}'"
+        
+        results = self.query_brand_voice(specialized_query, n_results=num_samples)
+
+        # Return only the captions for focused context
+        return [item['caption'] for item in results if 'caption' in item]
+
     def propose_content_plan(self, time_frame: Optional[str], current_date: date, recent_post_themes: Optional[list] = None, num_posts: Optional[int] = None) -> ContentPlan:
         """
         Generates a strategic content plan by coordinating with the content_planner_agent.

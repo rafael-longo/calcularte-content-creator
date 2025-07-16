@@ -17,15 +17,19 @@ The current focus has been on the successful implementation of the core backend 
         *   `plan-and-develop`: Executes the entire content creation workflow autonomously, from planning to final post generation.
 *   **Strategic Planner Implemented (Enhancement #1):** The `BrandStrategistAgent` can now generate proactive content plans, which are accessible via the `plan-content` command.
 *   **Brand Voice Reporting Implemented (Enhancement #2):** The system can now generate a comprehensive brand voice report on demand via the `report brand-voice` command.
+*   **Deepened Context Passing Implemented (Enhancement #4):**
+    *   **`BrandStrategistAgent` Updated:** A new `get_specialized_context` method was added to retrieve highly focused, topic-specific examples from the vector database.
+    *   **`OrchestratorAgent` Updated:** The `develop_post` workflow was enhanced. It now calls the `get_specialized_context` method to provide the `CopywriterAgent` with more relevant examples, improving the quality and consistency of generated captions.
 
 ## 3. Next Steps
 
-With the first three enhancements complete, the project will now proceed to the next item on the enhancement roadmap.
+With the first four enhancements complete, the project will now proceed to the next item on the enhancement roadmap.
 
-1.  **Implement Enhancement #4:** The immediate next step is to implement the "Deepen Inter-Agent Context Passing" enhancement as detailed in:
-    *   `docs/enhancement_plan_4_context_passing.md`
-2.  **Continue Roadmap:** After that, continue with the remaining enhancements:
+1.  **Implement Enhancement #5:** The immediate next step is to implement the "LLM-as-a-Judge" quality loop as detailed in:
     *   `docs/enhancement_plan_5_llm_as_judge.md`
+2.  **Continue Roadmap:** After that, continue with the remaining enhancements:
+>>>>>>>
+    *   `docs/enhancement_plan_6_session_memory.md`
     *   `docs/enhancement_plan_6_session_memory.md`
     *   `docs/enhancement_plan_7_interactive_refinement.md`
 3.  **Future Phase: Web Interface:** Once the core system is enhanced, the project will proceed with the development of the FastAPI backend and the React frontend.

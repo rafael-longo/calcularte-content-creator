@@ -239,17 +239,21 @@ class OrchestratorAgent:
         """
         print(f"Orchestrator: Developing post for idea: '{idea.title}'...")
         
-        # Step 1: Get brand context relevant to the idea
-        brand_context = self._get_brand_context(idea.title + " " + idea.defense_of_idea)
+        # Step 1: Get specialized context for the caption
+        copywriting_context = self.brand_strategist.get_specialized_context(
+            context_type="relevant captions for a post",
+            query=f"{idea.title} - {idea.defense_of_idea}"
+        )
 
-        # Step 2: Generate caption using CopywriterAgent
+        # Step 2: Generate caption using CopywriterAgent with specialized context
         print("Orchestrator: Writing caption...")
+        contextual_examples_str = "\n- ".join(copywriting_context)
         copywriter_input = f"""
         Idea Title: "{idea.title}"
         Idea Defense: "{idea.defense_of_idea}"
 
-        Brand Context:
-        {self._format_context(brand_context)}
+        Contextual Examples of Relevant Captions:
+        - {contextual_examples_str}
         """
         try:
             result = Runner.run_sync(self.copywriter, copywriter_input)
@@ -261,6 +265,9 @@ class OrchestratorAgent:
 
         # Step 3: Generate image prompts using ArtDirectorAgent
         print("Orchestrator: Generating image prompts...")
+
+        # For the Art Director, we still use the general context as there's no visual data in the DB
+        brand_context = self._get_brand_context(idea.title + " " + idea.defense_of_idea)
         
         art_director_input = f"""
         Pydantic Schema for the output:
