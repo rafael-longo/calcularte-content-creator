@@ -29,18 +29,22 @@ The current focus has been on the successful implementation of the core backend 
     *   **`src/main.py` Updated:** The main CLI file was updated to manage session state using a `.active_session` file. It now includes a `session` command group (`start`, `status`, `end`, `clear`) to control the active session.
     *   **Agents Updated:** The `OrchestratorAgent` and `BrandStrategistAgent` were refactored to accept and pass an optional `session` object to the `Runner.run_sync` calls, enabling conversation history to be maintained across commands.
     *   **`.gitignore` Updated:** The `sessions.db` and `.active_session` files are now ignored by Git.
+*   **Robust Session Management Implemented (Enhancement #7):**
+    *   **`src/main.py` Refactored:** The session management logic was completely overhauled. It now uses a persistent `sessions.db` file and automatically creates sessions if none are active. Configuration is loaded from the `.env` file.
+    *   **Token Safeguard Added:** A new utility `src/utils/token_counter.py` was created using `tiktoken`. Before commands, the system checks the session size and prompts the user with options if a token limit is exceeded, preventing high costs.
+    *   **`session inspect` Command:** A new CLI command was added to allow human-readable inspection of the active session's content for easier debugging.
+*   **Critical Bug Fix (`asyncio` Event Loop):**
+    *   **Agent Calls Hardened:** All calls to `Runner.run_sync` across the system (in `BrandStrategistAgent` and `OrchestratorAgent`) were replaced with `asyncio.run(Runner.run(...))`. This resolves a critical bug where agent calls would fail in the synchronous Typer CLI environment.
 
 ## 3. Next Steps
 
-With the first six enhancements complete, the project will now proceed to the remaining items on the core enhancement roadmap.
+With the first seven enhancements complete, the project will now proceed to the remaining items on the core enhancement roadmap.
 
-1.  **Implement Enhancement #7: Robust Session Management:** The immediate next step is to implement persistent, file-based sessions that start automatically and include safeguards against excessive context length. This is a foundational requirement for all subsequent conversational features.
-    *   `docs/enhancement_plan_7_robust_session_management.md`
-2.  **Implement Enhancement #8: Autonomous Maestro Agent:** Create a single, powerful, conversational entry point to the system (maestro command) managed by an autonomous MaestroAgent. This agent will interpret high-level user prompts and orchestrate the system's full capabilities by using specialist agents and functions as tools.
+1.  **Implement Enhancement #8: Autonomous Maestro Agent:** Create a single, powerful, conversational entry point to the system (maestro command) managed by an autonomous MaestroAgent. This agent will interpret high-level user prompts and orchestrate the system's full capabilities by using specialist agents and functions as tools.
     *   `docs/enhancement_plan_8_autonomous_maestro_orchestrator.md`
-3.  **Implement Enhancement #9: Interactive CLI Refinement Loop:** Make the refinement process conversational.
+2.  **Implement Enhancement #9: Interactive CLI Refinement Loop:** Make the refinement process conversational.
     *   `docs/enhancement_plan_9_interactive_refinement.md`
-4.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
+3.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
 
 ## 4. Key Decisions and Considerations
 
@@ -48,3 +52,4 @@ With the first six enhancements complete, the project will now proceed to the re
 *   **Structured Outputs:** Leveraging Pydantic models for structured outputs from agents (e.g., `PostIdea`, `ImagePrompt`) simplifies data handling and ensures consistency.
 *   **Modular Agent Design:** The clear separation of concerns among agents facilitates development, testing, and future modifications.
 *   **Generic Refinement Loop:** The implementation of a single, generic refinement method (`_evaluate_and_refine_content`) that can handle multiple content types (strings, Pydantic models) was a key decision to maintain DRY principles and create a more robust and maintainable codebase.
+*   **Synchronous Wrapper for Async Operations:** The `asyncio.run()` pattern has been established as the correct way to call async agent functions from the synchronous Typer CLI, ensuring stability. This is a critical pattern to maintain for future development.
