@@ -15,6 +15,7 @@ class PlannedPost(BaseModel):
     day_or_sequence: str  # e.g., "Monday", "Post 1"
     pillar: str
     reasoning: str
+    post_number: Optional[int] = None # Add post_number for num-based plans
 
 
 class ContentPlan(BaseModel):
@@ -43,18 +44,21 @@ Your task is to create a content plan based on the provided context.
 You MUST return a single, valid JSON object that conforms to the Pydantic model schema provided in the user message.
 The JSON object should be inside a 'plan' key.
 
-The user will provide the Pydantic schema, the time frame, the current date, and brand context.
+The user will provide the Pydantic schema, brand context, and either a `time_frame` or `num_posts`.
 
 Instructions for Analysis:
-1.  **Analyze Time & Seasonality:** Based on the current date and time frame from the user input, identify key seasonal opportunities.
-2.  **Ensure Variety:** Review recent post themes from the user input to avoid repetition.
-3.  **Identify Top Pillars:** Analyze the brand context from the user input to determine historically engaging content pillars.
-4.  **Synthesize Plan:** Combine these insights to create a balanced and timely content plan. Justify each choice in the 'reasoning' field.
+1.  **Prioritize `num_posts`:** If `num_posts` is provided, you MUST generate exactly that number of `PlannedPost` items. The `time_frame` should be ignored. The `day_or_sequence` field should be "Post 1", "Post 2", etc.
+2.  **If `time_frame` is provided:**
+    - **Analyze Time & Seasonality:** Based on the current date and time frame, identify key seasonal opportunities.
+    - **Synthesize Plan:** Combine these insights to create a balanced and timely content plan. Justify each choice in the 'reasoning' field.
+3.  **Ensure Variety:** Review recent post themes to avoid repetition.
+4.  **Identify Top Pillars:** Analyze the brand context to determine historically engaging content pillars.
 
 **Strict Output Rules:**
-- If the requested `time_frame` is 'day', you MUST generate a plan containing exactly one (1) `PlannedPost` item. The `day_or_sequence` field for this item MUST be the day of the week corresponding to the provided `current_date`.
-- If the requested `time_frame` is 'week', you MUST generate a plan containing multiple `PlannedPost` items, typically for days of the week, including the weekend (e.g., Monday, Wednesday, Friday, Sunday).
-- If the requested `time_frame` is 'month', you MUST generate a plan that covers the main themes and events for the entire month, sequenced logically.
+- If `num_posts` is provided, the plan MUST contain exactly `num_posts` items.
+- If `time_frame` is 'day', the plan MUST contain exactly one (1) `PlannedPost` item.
+- If `time_frame` is 'week', the plan MUST contain multiple `PlannedPost` items for different days.
+- If `time_frame` is 'month', the plan MUST cover themes for the entire month.
 """,
     output_type=ContentPlan,
     model="gpt-4.1-mini"
@@ -133,9 +137,10 @@ class BrandStrategistAgent:
         
         return relevant_content
 
-    def propose_content_plan(self, time_frame: str, current_date: date, recent_post_themes: Optional[list] = None) -> ContentPlan:
+    def propose_content_plan(self, time_frame: Optional[str], current_date: date, recent_post_themes: Optional[list] = None, num_posts: Optional[int] = None) -> ContentPlan:
         """
         Generates a strategic content plan by coordinating with the content_planner_agent.
+        Can be driven by a time_frame or a specific number of posts.
         """
         if not self.collection:
             return ContentPlan(plan=[])
@@ -151,6 +156,13 @@ class BrandStrategistAgent:
             extracted_themes = [item['metadata'].get('theme', 'unknown') for item in pillar_context_results]
             pillar_context += f" Recent successful themes were: {', '.join(set(extracted_themes))}."
 
+        # Build the user input based on whether num_posts or time_frame is provided
+        request_params = ""
+        if num_posts:
+            request_params = f"Number of Posts: {num_posts}"
+        else:
+            request_params = f"Time Frame: {time_frame}\nCurrent Date: {current_date.strftime('%Y-%m-%d')}"
+
         user_input = f"""
         Pydantic Schema:
         ```json
@@ -162,8 +174,7 @@ class BrandStrategistAgent:
         - {variety_context}
         - {pillar_context}
 
-        Time Frame: {time_frame}
-        Current Date: {current_date.strftime('%Y-%m-%d')}
+        {request_params}
         """
 
         try:

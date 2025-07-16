@@ -92,7 +92,55 @@ python src/main.py report brand-voice
 python src/main.py report brand-voice
 ```
 
-### 2.4. `ask-strategist` - Query Brand Strategist
+### 2.4. `plan` - Plan Content Ideas
+
+This command provides a flexible way to generate a list of structured `PostIdea` objects based on the high-level strategic plan. It's perfect for when you want to see the creative ideas before committing to full post development.
+
+**Usage:**
+
+```bash
+python src/main.py plan [--for "<time_frame>" | --num <number_of_ideas>]
+```
+
+*   `--for "<time_frame>"`: The time frame to plan for (e.g., "week", "month"). The command will generate one idea for each strategic point in the plan for that period.
+*   `--num <number_of_ideas>`: The specific number of ideas to generate. The command will generate a plan and then create ideas for the first `n` points.
+*   **Note:** You must use either `--for` or `--num`, but not both.
+
+**Examples:**
+
+```bash
+# Plan ideas for the next week
+python src/main.py plan --for "week"
+
+# Plan exactly 2 ideas
+python src/main.py plan --num 2
+```
+
+### 2.5. `plan-and-develop` - Autonomous Post Generation
+
+This is the most powerful command. It runs the entire content creation workflow autonomously. It first generates the strategic plan, then brainstorms ideas for each point, and finally develops each idea into a full post with a caption and image prompts.
+
+**Usage:**
+
+```bash
+python src/main.py plan-and-develop [--for "<time_frame>" | --num <number_of_posts>]
+```
+
+*   `--for "<time_frame>"`: The time frame for which to autonomously generate a full content calendar.
+*   `--num <number_of_posts>`: The specific number of full posts to generate from start to finish.
+*   **Note:** You must use either `--for` or `--num`, but not both.
+
+**Examples:**
+
+```bash
+# Autonomously create all content for the next week
+python src/main.py plan-and-develop --for "week"
+
+# Autonomously create 3 full posts
+python src/main.py plan-and-develop --num 3
+```
+
+### 2.6. `ask-strategist` - Query Brand Strategist
 
 This command allows you to query the `BrandStrategistAgent` to retrieve content from the brand's historical data that is semantically similar to your query. This is useful for understanding the brand's tone, style, and relevant topics.
 
@@ -110,7 +158,7 @@ python src/main.py ask-strategist "<your_query_text>"
 python src/main.py ask-strategist "Como organizar as finanças do meu negócio artesanal?"
 ```
 
-### 2.5. `generate-ideas` - Generate New Post Ideas
+### 2.7. `generate-ideas` - Generate New Post Ideas
 
 This command uses the `CreativeDirectorAgent` (orchestrated by the `OrchestratorAgent`) to brainstorm new Instagram post concepts based on a specified content pillar.
 
@@ -129,7 +177,7 @@ python src/main.py generate-ideas "<content_pillar>" [--num <number_of_ideas>]
 python src/main.py generate-ideas "Produtividade para Artesãs" --num 2
 ```
 
-### 2.6. `develop-post` - Develop a Full Post
+### 2.8. `develop-post` - Develop a Full Post
 
 This command takes a selected post idea (title, pillar, defense, and expected results) and uses the `OrchestratorAgent` to generate a complete Instagram caption (via `CopywriterAgent`) and a series of detailed image prompts (via `ArtDirectorAgent`).
 
@@ -153,7 +201,7 @@ python src/main.py develop-post "<idea_title>" "<idea_pillar>" "<idea_defense>" 
 python src/main.py develop-post "Descomplicando a Precificação: Seu Lucro na Ponta do Lápis!" "Precificação" "Este post oferece dicas práticas e mostra como o Calcularte simplifica a precificação para artesãs." "Aumentar o engajamento e direcionar tráfego para o Calcularte." --num-images 2
 ```
 
-### 2.7. `refine-content` - Refine Content with Feedback
+### 2.9. `refine-content` - Refine Content with Feedback
 
 This command allows you to refine a specific piece of generated content (like a caption or an image prompt) using the `ReviewerAgent` (orchestrated by the `OrchestratorAgent`) based on your feedback.
 

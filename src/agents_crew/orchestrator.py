@@ -1,8 +1,8 @@
 from typing import List, Dict, Any
 from datetime import date
 from agents import Runner
-from src.agents_crew.brand_strategist import BrandStrategistAgent, ContentPlan, BrandVoiceReport
-from src.agents_crew.creative_director import creative_director_agent, PostIdea
+from src.agents_crew.brand_strategist import BrandStrategistAgent, ContentPlan, BrandVoiceReport, PlannedPost
+from src.agents_crew.creative_director import creative_director_agent, PostIdea, PostIdeas
 from src.agents_crew.copywriter import copywriter_agent
 from src.agents_crew.art_director import art_director_agent, ImagePrompt
 from src.agents_crew.reviewer import reviewer_agent
@@ -44,18 +44,21 @@ class OrchestratorAgent:
         print("Orchestrator: Brand context fetched.")
         return brand_context
 
-    def plan_content(self, time_frame: str) -> ContentPlan:
+    def plan_content(self, time_frame: str = None, num_posts: int = None) -> ContentPlan:
         """
         Generates a strategic content plan by coordinating with the BrandStrategistAgent.
         """
-        print(f"Orchestrator: Generating content plan for '{time_frame}'...")
-        # In a real application, you might fetch recent post themes from a database.
-        # For this example, we'll pass None.
+        if num_posts:
+            print(f"Orchestrator: Generating content plan for {num_posts} posts...")
+        else:
+            print(f"Orchestrator: Generating content plan for '{time_frame}'...")
+        
         current_date = date.today()
         content_plan = self.brand_strategist.propose_content_plan(
             time_frame=time_frame,
             current_date=current_date,
-            recent_post_themes=None 
+            recent_post_themes=None,
+            num_posts=num_posts
         )
         print("Orchestrator: Content plan generated.")
         return content_plan
@@ -117,13 +120,74 @@ class OrchestratorAgent:
         print("Orchestrator: Report formatted.")
         return markdown_report.strip()
 
-    def generate_ideas(self, content_pillar: str, num_ideas: int = 3) -> List[PostIdea]:
+    def plan_content_ideas(self, time_frame: str = None, num_ideas: int = None) -> List[PostIdea]:
+        """
+        Generates a list of post ideas based on a strategic content plan.
+        """
+        print("Orchestrator: Planning content ideas...")
+        
+        # 1. Get the strategic plan from the BrandStrategist
+        plan = self.plan_content(time_frame=time_frame, num_posts=num_ideas)
+        if not plan or not plan.plan:
+            print("Orchestrator: Could not generate a content plan. Aborting idea generation.")
+            return []
+
+        # If num_ideas is specified, truncate the plan, otherwise use the full plan
+        planned_posts = plan.plan
+        if num_ideas is not None and num_ideas > 0:
+            planned_posts = planned_posts[:num_ideas]
+            print(f"Orchestrator: Limiting idea generation to {num_ideas} planned posts.")
+
+        # 2. Iterate through the plan and generate one idea for each point
+        all_ideas = []
+        for planned_post in planned_posts:
+            print(f"Orchestrator: Generating idea for pillar: '{planned_post.pillar}'...")
+            # The generate_ideas method already handles getting brand context.
+            # We pass the planned_post object to be used as additional context.
+            ideas = self.generate_ideas(
+                content_pillar=planned_post.pillar, 
+                num_ideas=1,
+                planned_post=planned_post # Pass the context here
+            )
+            if ideas:
+                all_ideas.extend(ideas)
+        
+        print(f"Orchestrator: Total of {len(all_ideas)} ideas planned.")
+        return all_ideas
+
+    def plan_and_develop_content(self, time_frame: str = None, num_ideas: int = None) -> List[Dict[str, Any]]:
+        """
+        Autonomously plans and develops a full content calendar.
+        """
+        print("Orchestrator: Starting autonomous plan-and-develop workflow...")
+        
+        # 1. Plan all the content ideas first
+        ideas_to_develop = self.plan_content_ideas(time_frame=time_frame, num_ideas=num_ideas)
+        if not ideas_to_develop:
+            print("Orchestrator: No ideas were generated, cannot develop content.")
+            return []
+
+        # 2. Develop each idea into a full post
+        developed_posts = []
+        for idea in ideas_to_develop:
+            full_post = self.develop_post(idea)
+            developed_posts.append(full_post)
+            
+        print("Orchestrator: Autonomous plan-and-develop workflow complete.")
+        return developed_posts
+
+    def generate_ideas(self, content_pillar: str, num_ideas: int = 3, planned_post: PlannedPost = None) -> List[PostIdea]:
         """
         Generates new post ideas by coordinating with the CreativeDirectorAgent.
+        Can optionally take a `planned_post` object for more specific context.
         """
         print(f"Orchestrator: Generating {num_ideas} ideas for content pillar: '{content_pillar}'...")
         brand_context = self._get_brand_context(content_pillar)
         
+        # Add planned_post context if available
+        if planned_post:
+            brand_context['strategic_context'] = planned_post.model_dump()
+
         # Construct the input for the agent
         user_input = f"""
         Content Pillar: '{content_pillar}'
@@ -136,9 +200,13 @@ class OrchestratorAgent:
         # Run the agent using the Agents SDK Runner
         try:
             result = Runner.run_sync(self.creative_director, user_input)
-            ideas = result.final_output
-            print("Orchestrator: Ideas generated.")
-            return ideas if ideas else []
+            post_ideas_obj = result.final_output
+            if post_ideas_obj and isinstance(post_ideas_obj, PostIdeas):
+                print("Orchestrator: Ideas generated.")
+                return post_ideas_obj.ideas
+            else:
+                print("Orchestrator: No ideas generated or incorrect format received.")
+                return []
         except Exception as e:
             print(f"Orchestrator: Error running CreativeDirectorAgent: {e}")
             return []
@@ -147,7 +215,11 @@ class OrchestratorAgent:
         """Helper to format dictionary context into a string for the prompt."""
         formatted_str = ""
         for key, value in context.items():
-            if isinstance(value, list):
+            if isinstance(value, dict):
+                formatted_str += f"- {key.replace('_', ' ').title()}:\n"
+                for sub_key, sub_value in value.items():
+                    formatted_str += f"  - {sub_key.title()}: {sub_value}\n"
+            elif isinstance(value, list):
                 formatted_str += f"- {key.replace('_', ' ').title()}:\n"
                 for item in value:
                     formatted_str += f"  - {item}\n"

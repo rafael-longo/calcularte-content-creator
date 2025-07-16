@@ -94,6 +94,72 @@ def plan_content_command(
     else:
         typer.echo("Failed to generate content plan.")
 
+def validate_plan_params(for_time: str, num: int):
+    if for_time and num:
+        raise typer.BadParameter("Only one of --for or --num can be used at a time.")
+    if not for_time and not num:
+        raise typer.BadParameter("One of --for or --num must be provided.")
+
+@app.command("plan")
+def plan_command(
+    for_time: Optional[str] = typer.Option(None, "--for", help="The time frame to plan for (e.g., 'week', 'month')."),
+    num: Optional[int] = typer.Option(None, "--num", "-n", help="The number of ideas to plan.")
+):
+    """
+    Plans content ideas based on a strategic plan.
+    """
+    validate_plan_params(for_time, num)
+    check_openai_api_key()
+    
+    if for_time:
+        typer.echo(f"Planning content ideas for the next '{for_time}'...")
+        ideas = orchestrator.plan_content_ideas(time_frame=for_time)
+    else:
+        typer.echo(f"Planning {num} content ideas...")
+        ideas = orchestrator.plan_content_ideas(num_ideas=num)
+
+    if ideas:
+        typer.echo("\n--- Planned Ideas ---")
+        for i, idea in enumerate(ideas):
+            typer.echo(f"Idea {i+1}:")
+            typer.echo(f"  Title: {idea.title}")
+            typer.echo(f"  Content Pillar: {idea.content_pillar}")
+            typer.echo(f"  Defense: {idea.defense_of_idea}")
+            typer.echo(f"  Expected Results: {idea.expected_results}")
+            typer.echo("---")
+    else:
+        typer.echo("No ideas were planned.")
+
+@app.command("plan-and-develop")
+def plan_and_develop_command(
+    for_time: Optional[str] = typer.Option(None, "--for", help="The time frame to plan and develop for (e.g., 'week', 'month')."),
+    num: Optional[int] = typer.Option(None, "--num", "-n", help="The number of posts to plan and develop.")
+):
+    """
+    Autonomously plans and develops a full content calendar.
+    """
+    validate_plan_params(for_time, num)
+    check_openai_api_key()
+
+    if for_time:
+        typer.echo(f"Autonomously planning and developing content for the next '{for_time}'...")
+        developed_posts = orchestrator.plan_and_develop_content(time_frame=for_time)
+    else:
+        typer.echo(f"Autonomously planning and developing {num} posts...")
+        developed_posts = orchestrator.plan_and_develop_content(num_ideas=num)
+
+    if developed_posts:
+        typer.echo("\n--- Autonomously Developed Content Calendar ---")
+        for i, post in enumerate(developed_posts):
+            typer.echo(f"--- Post {i+1}: {post['idea'].title} ---")
+            typer.echo(f"\n**Caption:**\n{post['caption']}")
+            typer.echo("\n**Image Prompts:**")
+            for j, prompt in enumerate(post['image_prompts']):
+                typer.echo(f"  - Prompt {j+1}: {prompt}")
+            typer.echo("\n" + "="*40 + "\n")
+    else:
+        typer.echo("No content was developed.")
+
 @report_app.command("brand-voice")
 def report_brand_voice_command():
     """

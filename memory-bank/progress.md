@@ -26,9 +26,13 @@
     *   `ingest`
     *   `ask-strategist`
     *   `plan-content`
+    *   `report brand-voice`
+    *   `plan`
+    *   `plan-and-develop`
     *   `generate-ideas`
     *   `develop-post`
     *   `refine-content`
+*   **Flexible and Autonomous Post Generation:** The system can now autonomously plan and develop content from start to finish using the `plan` and `plan-and-develop` commands. The `OrchestratorAgent` and `CreativeDirectorAgent` have been enhanced to support this workflow.
 *   **Strategic Content Planning:** The `BrandStrategistAgent` can now generate proactive, strategic content plans based on seasonality and historical data, accessible via the `plan-content` CLI command.
 *   **On-Demand Brand Voice Reporting:** The system can generate a comprehensive, human-readable report on the brand's voice, tone, and style via the `report brand-voice` CLI command.
 
@@ -37,7 +41,6 @@
 The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
 
 **Enhancement Roadmap:**
-3.  **Enable Flexible and Autonomous Post Generation:** Introduce powerful `plan` and `plan-and-develop` commands.
 4.  **Deepen Inter-Agent Context Passing:** Make context passing more intelligent and specific.
 5.  **Implement "LLM-as-a-Judge" Quality Loop:** Add an automated quality control step.
 6.  **Implement Persistent Session Memory:** Make the CLI stateful using the SDK's `SQLiteSession`.
@@ -47,7 +50,7 @@ After these enhancements are implemented, the project will proceed to the develo
 
 ## 3. Current Status
 
-The project has successfully completed the first two enhancements from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist" and "Implement On-Demand Brand Voice Reporting". The system is now capable of proactive content planning and detailed brand voice analysis.
+The project has successfully completed the first three enhancements from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist", "Implement On-Demand Brand Voice Reporting", and "Enable Flexible and Autonomous Post Generation". The system is now capable of fully autonomous content creation, from high-level planning to final post development.
 
 ## 4. Known Issues
 
