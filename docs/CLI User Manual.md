@@ -39,7 +39,85 @@ Before using the CLI, ensure you have Python 3.11.8 and `pyenv` installed.
 
 All commands are executed using `python src/main.py <command>`.
 
-### 2.1. `ingest` - Ingest Brand Data
+### 2.1. `session` - Manage Persistent Sessions
+
+These commands allow you to manage conversational sessions, enabling the CLI to remember context across multiple commands.
+
+**Usage:**
+
+```bash
+python src/main.py session <subcommand> [arguments]
+```
+
+#### `session start <name>` - Start or Switch Session
+
+Starts a new session or switches to an existing one. All subsequent commands that support sessions will use this context.
+
+**Usage:**
+
+```bash
+python src/main.py session start <session_name>
+```
+
+*   `<session_name>`: A unique name for your session (e.g., "my_campaign", "product_launch_v2").
+
+**Example:**
+
+```bash
+python src/main.py session start my_new_campaign
+```
+
+#### `session status` - Check Active Session
+
+Displays the name of the currently active session.
+
+**Usage:**
+
+```bash
+python src/main.py session status
+```
+
+**Example:**
+
+```bash
+python src/main.py session status
+```
+
+#### `session end` - End Current Session
+
+Ends the currently active session, clearing the local session state. This does not delete the session's history from the database.
+
+**Usage:**
+
+```bash
+python src/main.py session end
+```
+
+**Example:**
+
+```bash
+python src/main.py session end
+```
+
+#### `session clear <name>` - Clear Session History
+
+Permanently deletes all conversation history for a specific session from the database.
+
+**Usage:**
+
+```bash
+python src/main.py session clear <session_name>
+```
+
+*   `<session_name>`: The name of the session whose history you want to clear.
+
+**Example:**
+
+```bash
+python src/main.py session clear old_campaign_data
+```
+
+### 2.2. `ingest` - Ingest Brand Data
 
 This command loads historical Instagram post data into the ChromaDB vector database, which the `BrandStrategistAgent` uses to understand the Calcularte brand voice.
 

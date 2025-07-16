@@ -25,16 +25,18 @@ The current focus has been on the successful implementation of the core backend 
     *   **`EvaluatorAgent` Created:** A new agent was created to act as a brand guardian, reviewing content for quality and adherence to brand principles.
     *   **Generic Refinement Loop:** A generic `_evaluate_and_refine_content` method was implemented in the `OrchestratorAgent`. This reusable method creates a quality control loop that can handle both string and Pydantic model outputs, ensuring all generated content undergoes a review-and-refine cycle.
     *   **Specialist Agents Updated:** The `CopywriterAgent` and `ArtDirectorAgent` were updated to handle feedback from the `EvaluatorAgent` and revise their outputs accordingly.
+*   **Persistent Session Memory Implemented (Enhancement #6):**
+    *   **`src/main.py` Updated:** The main CLI file was updated to manage session state using a `.active_session` file. It now includes a `session` command group (`start`, `status`, `end`, `clear`) to control the active session.
+    *   **Agents Updated:** The `OrchestratorAgent` and `BrandStrategistAgent` were refactored to accept and pass an optional `session` object to the `Runner.run_sync` calls, enabling conversation history to be maintained across commands.
+    *   **`.gitignore` Updated:** The `sessions.db` and `.active_session` files are now ignored by Git.
 
 ## 3. Next Steps
 
-With the first five enhancements complete, the project will now proceed to the next item on the enhancement roadmap.
+With the first six enhancements complete, the project will now proceed to the final item on the core enhancement roadmap.
 
-1.  **Implement Enhancement #6:** The immediate next step is to implement "Persistent Session Memory" to make the CLI stateful, as detailed in:
-    *   `docs/enhancement_plan_6_session_memory.md`
-2.  **Continue Roadmap:** After that, continue with the final core enhancement:
+1.  **Implement Enhancement #7:** The immediate next step is to implement an "Interactive CLI Refinement Loop" to make the content refinement process conversational, as detailed in:
     *   `docs/enhancement_plan_7_interactive_refinement.md`
-3.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
+2.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
 
 ## 4. Key Decisions and Considerations
 

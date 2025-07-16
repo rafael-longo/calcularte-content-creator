@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from typing import Optional
 from agents.tracing import add_trace_processor
+from agents import SQLiteSession
 from scripts.ingest_data import ingest_data
 from src.agents_crew.brand_strategist import BrandStrategistAgent
 from src.agents_crew.orchestrator import OrchestratorAgent, PostIdea
@@ -17,9 +18,72 @@ log.info("Custom logging initialized and trace processor added.")
 
 app = typer.Typer()
 report_app = typer.Typer()
+session_app = typer.Typer()
 app.add_typer(report_app, name="report")
+app.add_typer(session_app, name="session")
 
 orchestrator = OrchestratorAgent() # Initialize OrchestratorAgent once
+
+ACTIVE_SESSION_FILE = ".active_session"
+
+def get_active_session() -> Optional[str]:
+    """Reads the active session ID from the state file."""
+    if os.path.exists(ACTIVE_SESSION_FILE):
+        with open(ACTIVE_SESSION_FILE, "r") as f:
+            return f.read().strip()
+    return None
+
+def set_active_session(session_id: str):
+    """Writes the active session ID to the state file."""
+    with open(ACTIVE_SESSION_FILE, "w") as f:
+        f.write(session_id)
+
+def clear_active_session():
+    """Removes the active session state file."""
+    if os.path.exists(ACTIVE_SESSION_FILE):
+        os.remove(ACTIVE_SESSION_FILE)
+
+@session_app.command("start")
+def session_start(name: str = typer.Argument(..., help="The name for the session.")):
+    """Starts or switches to a named session."""
+    set_active_session(name)
+    log.success(f"Session '{name}' is now active.")
+    typer.echo(f"Session '{name}' is now active.")
+
+@session_app.command("status")
+def session_status():
+    """Checks the currently active session."""
+    active_session = get_active_session()
+    if active_session:
+        log.info(f"Currently active session: '{active_session}'")
+        typer.echo(f"Currently active session: '{active_session}'")
+    else:
+        log.info("No active session.")
+        typer.echo("No active session.")
+
+@session_app.command("end")
+def session_end():
+    """Ends the current session."""
+    active_session = get_active_session()
+    if active_session:
+        clear_active_session()
+        log.success(f"Session '{active_session}' has been ended.")
+        typer.echo(f"Session '{active_session}' has been ended.")
+    else:
+        log.warning("No active session to end.")
+        typer.echo("No active session to end.")
+
+@session_app.command("clear")
+def session_clear(name: str = typer.Argument(..., help="The name of the session to clear.")):
+    """Clears all history for a specific session."""
+    try:
+        session_to_clear = SQLiteSession(session_id=name)
+        session_to_clear.clear()
+        log.success(f"History for session '{name}' has been cleared.")
+        typer.echo(f"History for session '{name}' has been cleared.")
+    except Exception as e:
+        log.error(f"Failed to clear session '{name}': {e}")
+        typer.echo(f"Error: Failed to clear session '{name}'.")
 
 def check_openai_api_key():
     if not os.getenv("OPENAI_API_KEY"):
@@ -90,9 +154,14 @@ def plan_content_command(
     Generates a strategic content plan using the Orchestrator Agent.
     """
     check_openai_api_key()
+    active_session_id = get_active_session()
+    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
+    if session:
+        log.info(f"Using active session: '{active_session_id}'")
+
     log.info(f"Generating content plan for the next '{time_frame}'...")
     typer.echo(f"Generating content plan for the next '{time_frame}'...")
-    plan = orchestrator.plan_content(time_frame)
+    plan = orchestrator.plan_content(time_frame, session=session)
     
     if plan and plan.plan:
         log.success(f"Successfully generated content plan with {len(plan.plan)} posts.")
@@ -122,15 +191,19 @@ def plan_command(
     """
     validate_plan_params(for_time, num)
     check_openai_api_key()
+    active_session_id = get_active_session()
+    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
+    if session:
+        log.info(f"Using active session: '{active_session_id}'")
     
     if for_time:
         log.info(f"Planning content ideas for the next '{for_time}'...")
         typer.echo(f"Planning content ideas for the next '{for_time}'...")
-        ideas = orchestrator.plan_content_ideas(time_frame=for_time)
+        ideas = orchestrator.plan_content_ideas(time_frame=for_time, session=session)
     else:
         log.info(f"Planning {num} content ideas...")
         typer.echo(f"Planning {num} content ideas...")
-        ideas = orchestrator.plan_content_ideas(num_ideas=num)
+        ideas = orchestrator.plan_content_ideas(num_ideas=num, session=session)
 
     if ideas:
         log.success(f"Successfully planned {len(ideas)} ideas.")
@@ -156,15 +229,19 @@ def plan_and_develop_command(
     """
     validate_plan_params(for_time, num)
     check_openai_api_key()
+    active_session_id = get_active_session()
+    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
+    if session:
+        log.info(f"Using active session: '{active_session_id}'")
 
     if for_time:
         log.info(f"Starting autonomous plan-and-develop for time frame: '{for_time}'...")
         typer.echo(f"Autonomously planning and developing content for the next '{for_time}'...")
-        developed_posts = orchestrator.plan_and_develop_content(time_frame=for_time)
+        developed_posts = orchestrator.plan_and_develop_content(time_frame=for_time, session=session)
     else:
         log.info(f"Starting autonomous plan-and-develop for {num} posts...")
         typer.echo(f"Autonomously planning and developing {num} posts...")
-        developed_posts = orchestrator.plan_and_develop_content(num_ideas=num)
+        developed_posts = orchestrator.plan_and_develop_content(num_ideas=num, session=session)
 
     if developed_posts:
         log.success(f"Successfully developed {len(developed_posts)} posts.")
@@ -186,9 +263,14 @@ def report_brand_voice_command():
     Generates a comprehensive, human-readable report on the brand's voice.
     """
     check_openai_api_key()
+    active_session_id = get_active_session()
+    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
+    if session:
+        log.info(f"Using active session: '{active_session_id}'")
+
     log.info("Generating brand voice report...")
     typer.echo("Generating brand voice report...")
-    report = orchestrator.generate_brand_voice_report()
+    report = orchestrator.generate_brand_voice_report(session=session)
     
     if report and "Could not generate" not in report:
         log.success("Successfully generated brand voice report.")
@@ -208,9 +290,14 @@ def generate_ideas_command(
     Generates new post ideas using the Orchestrator Agent.
     """
     check_openai_api_key()
+    active_session_id = get_active_session()
+    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
+    if session:
+        log.info(f"Using active session: '{active_session_id}'")
+
     log.info(f"Generating {num_ideas} ideas for pillar: '{pillar}'...")
     typer.echo(f"Generating {num_ideas} ideas for pillar: '{pillar}'...")
-    ideas = orchestrator.generate_ideas(pillar, num_ideas)
+    ideas = orchestrator.generate_ideas(pillar, num_ideas, session=session)
     if ideas:
         log.success(f"Successfully generated {len(ideas)} ideas.")
         typer.echo("\n--- Generated Ideas ---")
@@ -237,6 +324,10 @@ def develop_post_command(
     Develops a full post (caption + image prompts) based on a selected idea.
     """
     check_openai_api_key()
+    active_session_id = get_active_session()
+    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
+    if session:
+        log.info(f"Using active session: '{active_session_id}'")
     
     idea = PostIdea(
         title=idea_title,
@@ -247,7 +338,7 @@ def develop_post_command(
     
     log.info(f"Developing full post for idea: '{idea.title}'...")
     typer.echo(f"Developing full post for idea: '{idea.title}'...")
-    full_post = orchestrator.develop_post(idea, num_image_prompts)
+    full_post = orchestrator.develop_post(idea, num_image_prompts, session=session)
     
     if full_post and full_post.get('caption') and "Error" not in full_post['caption']:
         log.success("Successfully developed post.")
@@ -272,6 +363,10 @@ def refine_content_command(
     Refines a specific content component (caption or image prompt) using the Reviewer Agent.
     """
     check_openai_api_key()
+    active_session_id = get_active_session()
+    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
+    if session:
+        log.info(f"Using active session: '{active_session_id}'")
 
     # For simplicity, we'll pass a dummy post_context for now.
     # In a real app, this would be a more structured object.
@@ -279,7 +374,7 @@ def refine_content_command(
 
     log.info(f"Refining {component_type}...")
     typer.echo(f"Refining {component_type}...")
-    revised_content = orchestrator.refine_content(component_type, original_content, user_feedback, post_context)
+    revised_content = orchestrator.refine_content(component_type, original_content, user_feedback, post_context, session=session)
     
     if revised_content and "Error" not in revised_content:
         log.success(f"Successfully refined {component_type}.")

@@ -1,6 +1,6 @@
-from typing import List, Dict, Any, Type
+from typing import List, Dict, Any, Type, Optional
 from datetime import date
-from agents import Runner, Agent
+from agents import Runner, Agent, Session
 from pydantic import TypeAdapter, BaseModel
 from src.agents_crew.brand_strategist import BrandStrategistAgent, ContentPlan, BrandVoiceReport, PlannedPost
 from src.agents_crew.creative_director import creative_director_agent, PostIdea, GeneratedIdeas
@@ -48,7 +48,7 @@ class OrchestratorAgent:
         log.info("Brand context fetched.")
         return brand_context
 
-    def plan_content(self, time_frame: str = None, num_posts: int = None) -> ContentPlan:
+    def plan_content(self, time_frame: str = None, num_posts: int = None, session: Optional[Session] = None) -> ContentPlan:
         """
         Generates a strategic content plan by coordinating with the BrandStrategistAgent.
         """
@@ -62,19 +62,20 @@ class OrchestratorAgent:
             time_frame=time_frame,
             current_date=current_date,
             recent_post_themes=None,
-            num_posts=num_posts
+            num_posts=num_posts,
+            session=session
         )
         log.info("Content plan generated.")
         return content_plan
 
-    def generate_brand_voice_report(self) -> str:
+    def generate_brand_voice_report(self, session: Optional[Session] = None) -> str:
         """
         Generates and formats a comprehensive brand voice report.
         """
         log.info("Generating brand voice report...")
         
         # 1. Trigger the report generation from the BrandStrategistAgent
-        report_data = self.brand_strategist.generate_brand_voice_report()
+        report_data = self.brand_strategist.generate_brand_voice_report(session=session)
         
         if not report_data or not report_data.executive_summary:
             log.error("Could not generate the brand voice report. The data from the strategist was empty.")
@@ -125,14 +126,14 @@ class OrchestratorAgent:
         log.success("Report formatted successfully.")
         return markdown_report.strip()
 
-    def plan_content_ideas(self, time_frame: str = None, num_ideas: int = None) -> List[PostIdea]:
+    def plan_content_ideas(self, time_frame: str = None, num_ideas: int = None, session: Optional[Session] = None) -> List[PostIdea]:
         """
         Generates a list of post ideas based on a strategic content plan.
         """
         log.info("Planning content ideas...")
         
         # 1. Get the strategic plan from the BrandStrategist
-        plan = self.plan_content(time_frame=time_frame, num_posts=num_ideas)
+        plan = self.plan_content(time_frame=time_frame, num_posts=num_ideas, session=session)
         if not plan or not plan.plan:
             log.error("Could not generate a content plan. Aborting idea generation.")
             return []
@@ -152,7 +153,8 @@ class OrchestratorAgent:
             ideas = self.generate_ideas(
                 content_pillar=planned_post.pillar, 
                 num_ideas=1,
-                planned_post=planned_post # Pass the context here
+                planned_post=planned_post, # Pass the context here
+                session=session
             )
             if ideas:
                 all_ideas.extend(ideas)
@@ -160,14 +162,14 @@ class OrchestratorAgent:
         log.success(f"Total of {len(all_ideas)} ideas planned.")
         return all_ideas
 
-    def plan_and_develop_content(self, time_frame: str = None, num_ideas: int = None) -> List[Dict[str, Any]]:
+    def plan_and_develop_content(self, time_frame: str = None, num_ideas: int = None, session: Optional[Session] = None) -> List[Dict[str, Any]]:
         """
         Autonomously plans and develops a full content calendar.
         """
         log.info("Starting autonomous plan-and-develop workflow...")
         
         # 1. Plan all the content ideas first
-        ideas_to_develop = self.plan_content_ideas(time_frame=time_frame, num_ideas=num_ideas)
+        ideas_to_develop = self.plan_content_ideas(time_frame=time_frame, num_ideas=num_ideas, session=session)
         if not ideas_to_develop:
             log.error("No ideas were generated, cannot develop content.")
             return []
@@ -175,13 +177,13 @@ class OrchestratorAgent:
         # 2. Develop each idea into a full post
         developed_posts = []
         for idea in ideas_to_develop:
-            full_post = self.develop_post(idea)
+            full_post = self.develop_post(idea, session=session)
             developed_posts.append(full_post)
             
         log.success("Autonomous plan-and-develop workflow complete.")
         return developed_posts
 
-    def generate_ideas(self, content_pillar: str, num_ideas: int = 3, planned_post: PlannedPost = None) -> List[PostIdea]:
+    def generate_ideas(self, content_pillar: str, num_ideas: int = 3, planned_post: PlannedPost = None, session: Optional[Session] = None) -> List[PostIdea]:
         """
         Generates new post ideas by coordinating with the CreativeDirectorAgent.
         Can optionally take a `planned_post` object for more specific context.
@@ -211,7 +213,7 @@ class OrchestratorAgent:
 
         # Run the agent using the Agents SDK Runner
         try:
-            result = Runner.run_sync(self.creative_director, user_input)
+            result = Runner.run_sync(self.creative_director, user_input, session=session)
             ideas_obj = result.final_output
             if ideas_obj and isinstance(ideas_obj, GeneratedIdeas):
                 log.success(f"Received {len(ideas_obj.ideas)} ideas from CreativeDirectorAgent.")
@@ -239,7 +241,7 @@ class OrchestratorAgent:
                 formatted_str += f"- {key.replace('_', ' ').title()}: {value}\n"
         return formatted_str.strip()
 
-    def _evaluate_and_refine_content(self, creator_agent: Agent, initial_input: str, content_type: str, max_retries: int = 2) -> Any:
+    def _evaluate_and_refine_content(self, creator_agent: Agent, initial_input: str, content_type: str, max_retries: int = 2, session: Optional[Session] = None) -> Any:
         """
         A generic quality control loop that uses an EvaluatorAgent to refine content.
         It can handle both string and Pydantic model outputs.
@@ -254,7 +256,7 @@ class OrchestratorAgent:
             revised_input = f"{initial_input}\n\nFeedback for revision: {feedback}" if feedback else initial_input
 
             try:
-                result = Runner.run_sync(creator_agent, revised_input)
+                result = Runner.run_sync(creator_agent, revised_input, session=session)
                 current_content = result.final_output
                 if not current_content:
                     raise ValueError("Creator agent returned empty content.")
@@ -287,7 +289,7 @@ class OrchestratorAgent:
             """
             log.info(f"Evaluating {content_type}...")
             try:
-                eval_result = Runner.run_sync(self.evaluator, evaluator_input)
+                eval_result = Runner.run_sync(self.evaluator, evaluator_input, session=session)
                 evaluation: EvaluationResult = eval_result.final_output
                 log.info(f"Evaluation result: {evaluation.score}")
 
@@ -305,7 +307,7 @@ class OrchestratorAgent:
         log.warning(f"Max retries reached for {content_type}. Returning last generated content.")
         return current_content
 
-    def develop_post(self, idea: PostIdea, num_image_prompts: int = 3) -> Dict[str, Any]:
+    def develop_post(self, idea: PostIdea, num_image_prompts: int = 3, session: Optional[Session] = None) -> Dict[str, Any]:
         """
         Develops a full post (caption + image prompts) based on a selected idea,
         including a quality control loop.
@@ -328,7 +330,8 @@ class OrchestratorAgent:
         caption = self._evaluate_and_refine_content(
             creator_agent=self.copywriter,
             initial_input=copywriter_initial_input,
-            content_type="caption"
+            content_type="caption",
+            session=session
         ) or "Error generating caption."
 
         # Step 2: Generate and refine image prompts
@@ -349,7 +352,8 @@ class OrchestratorAgent:
         image_prompts_obj = self._evaluate_and_refine_content(
             creator_agent=self.art_director,
             initial_input=art_director_initial_input,
-            content_type="image_prompts"
+            content_type="image_prompts",
+            session=session
         )
         
         image_prompts = image_prompts_obj.prompts if image_prompts_obj else []
@@ -360,7 +364,7 @@ class OrchestratorAgent:
             "image_prompts": [p.prompt for p in image_prompts] if image_prompts else []
         }
 
-    def refine_content(self, component_type: str, original_content: str, user_feedback: str, post_context: Dict[str, Any]) -> str:
+    def refine_content(self, component_type: str, original_content: str, user_feedback: str, post_context: Dict[str, Any], session: Optional[Session] = None) -> str:
         """
         Refines a specific content component using the ReviewerAgent.
         """
@@ -388,7 +392,7 @@ class OrchestratorAgent:
         log.debug(f"Passing the following context to ReviewerAgent:\n{reviewer_input}")
         
         try:
-            result = Runner.run_sync(self.reviewer, reviewer_input)
+            result = Runner.run_sync(self.reviewer, reviewer_input, session=session)
             revised_content = result.final_output
             log.success(f"{component_type.capitalize()} refined successfully.")
             return revised_content

@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from datetime import date
-from agents import Agent, Runner
+from agents import Agent, Runner, Session
 from src.utils.logging import log
 
 # Load environment variables
@@ -161,7 +161,7 @@ class BrandStrategistAgent:
         log.debug(f"Found {len(captions)} specialized context examples.")
         return captions
 
-    def propose_content_plan(self, time_frame: Optional[str], current_date: date, recent_post_themes: Optional[list] = None, num_posts: Optional[int] = None) -> ContentPlan:
+    def propose_content_plan(self, time_frame: Optional[str], current_date: date, recent_post_themes: Optional[list] = None, num_posts: Optional[int] = None, session: Optional[Session] = None) -> ContentPlan:
         """
         Generates a strategic content plan by coordinating with the content_planner_agent.
         Can be driven by a time_frame or a specific number of posts.
@@ -205,7 +205,7 @@ class BrandStrategistAgent:
         log.debug(f"Passing the following context to ContentPlannerAgent:\n{user_input}")
 
         try:
-            result = Runner.run_sync(content_planner_agent, user_input)
+            result = Runner.run_sync(content_planner_agent, user_input, session=session)
             plan = result.final_output
             if plan and plan.plan:
                 log.success(f"Content plan generated with {len(plan.plan)} posts.")
@@ -216,7 +216,7 @@ class BrandStrategistAgent:
             log.error(f"Error running content_planner_agent: {e}")
             return ContentPlan(plan=[])
 
-    def generate_brand_voice_report(self) -> BrandVoiceReport:
+    def generate_brand_voice_report(self, session: Optional[Session] = None) -> BrandVoiceReport:
         """
         Analyzes the brand's voice and generates a report using the brand_reporter_agent.
         """
@@ -252,7 +252,7 @@ class BrandStrategistAgent:
         log.debug(f"Passing the following context to BrandReporterAgent:\n{user_input}")
 
         try:
-            result = Runner.run_sync(brand_reporter_agent, user_input)
+            result = Runner.run_sync(brand_reporter_agent, user_input, session=session)
             report = result.final_output
             if report and report.executive_summary:
                 log.success("Brand voice report generated successfully.")
