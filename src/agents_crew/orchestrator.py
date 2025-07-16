@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Dict, Any, Type, Optional
 from datetime import date
 from agents import Runner, Agent, Session
@@ -213,7 +214,7 @@ class OrchestratorAgent:
 
         # Run the agent using the Agents SDK Runner
         try:
-            result = Runner.run_sync(self.creative_director, user_input, session=session)
+            result = asyncio.run(Runner.run(self.creative_director, user_input, session=session))
             ideas_obj = result.final_output
             if ideas_obj and isinstance(ideas_obj, GeneratedIdeas):
                 log.success(f"Received {len(ideas_obj.ideas)} ideas from CreativeDirectorAgent.")
@@ -256,7 +257,7 @@ class OrchestratorAgent:
             revised_input = f"{initial_input}\n\nFeedback for revision: {feedback}" if feedback else initial_input
 
             try:
-                result = Runner.run_sync(creator_agent, revised_input, session=session)
+                result = asyncio.run(Runner.run(creator_agent, revised_input, session=session))
                 current_content = result.final_output
                 if not current_content:
                     raise ValueError("Creator agent returned empty content.")
@@ -289,7 +290,7 @@ class OrchestratorAgent:
             """
             log.info(f"Evaluating {content_type}...")
             try:
-                eval_result = Runner.run_sync(self.evaluator, evaluator_input, session=session)
+                eval_result = asyncio.run(Runner.run(self.evaluator, evaluator_input, session=session))
                 evaluation: EvaluationResult = eval_result.final_output
                 log.info(f"Evaluation result: {evaluation.score}")
 
@@ -392,7 +393,7 @@ class OrchestratorAgent:
         log.debug(f"Passing the following context to ReviewerAgent:\n{reviewer_input}")
         
         try:
-            result = Runner.run_sync(self.reviewer, reviewer_input, session=session)
+            result = asyncio.run(Runner.run(self.reviewer, reviewer_input, session=session))
             revised_content = result.final_output
             log.success(f"{component_type.capitalize()} refined successfully.")
             return revised_content

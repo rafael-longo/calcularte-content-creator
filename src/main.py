@@ -1,5 +1,6 @@
 import typer
 import os
+import json
 from dotenv import load_dotenv
 from typing import Optional
 from agents.tracing import add_trace_processor
@@ -8,6 +9,8 @@ from scripts.ingest_data import ingest_data
 from src.agents_crew.brand_strategist import BrandStrategistAgent
 from src.agents_crew.orchestrator import OrchestratorAgent, PostIdea
 from src.utils.logging import CustomLoguruProcessor, log
+from src.utils.token_counter import get_session_token_count
+from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -24,66 +27,169 @@ app.add_typer(session_app, name="session")
 
 orchestrator = OrchestratorAgent() # Initialize OrchestratorAgent once
 
-ACTIVE_SESSION_FILE = ".active_session"
+# --- Session Management Constants from .env ---
+SESSION_DB_FILE = os.getenv("SESSION_DB_FILE", "sessions.db")
+ACTIVE_SESSION_FILE = os.getenv("ACTIVE_SESSION_FILE", ".active_session")
+TOKEN_LIMIT = int(os.getenv("TOKEN_LIMIT", 100000))
 
-def get_active_session() -> Optional[str]:
+# --- New Session Management Helper Functions ---
+
+def _get_active_session_id() -> Optional[str]:
     """Reads the active session ID from the state file."""
     if os.path.exists(ACTIVE_SESSION_FILE):
         with open(ACTIVE_SESSION_FILE, "r") as f:
             return f.read().strip()
     return None
 
-def set_active_session(session_id: str):
+def _set_active_session_id(session_id: str):
     """Writes the active session ID to the state file."""
     with open(ACTIVE_SESSION_FILE, "w") as f:
         f.write(session_id)
 
-def clear_active_session():
+def _clear_active_session_id():
     """Removes the active session state file."""
     if os.path.exists(ACTIVE_SESSION_FILE):
         os.remove(ACTIVE_SESSION_FILE)
 
+def _handle_token_limit(session: SQLiteSession):
+    """Handles the case where the token limit is exceeded."""
+    token_count = get_session_token_count(session)
+    log.warning(f"Session '{session.session_id}' exceeds token limit of {TOKEN_LIMIT} with {token_count} tokens.")
+    typer.secho(f"Warning: Session '{session.session_id}' has a large history ({token_count} tokens).", fg=typer.colors.YELLOW)
+    typer.secho("This may lead to high costs and latency.", fg=typer.colors.YELLOW)
+    
+    action = typer.prompt(
+        "Choose an action:\n"
+        "1: Proceed with the command\n"
+        "2: Clear session data and proceed\n"
+        "3: End current session, start a new one, and proceed\n"
+        "4: Quit\n"
+        "Enter your choice (1-4)"
+    )
+
+    if action == '1':
+        log.info("User chose to proceed with the large session.")
+        return session
+    elif action == '2':
+        log.info(f"User chose to clear session '{session.session_id}'.")
+        session.clear()
+        log.success(f"Session '{session.session_id}' cleared.")
+        typer.echo(f"Session '{session.session_id}' history has been cleared.")
+        return session
+    elif action == '3':
+        log.info(f"User chose to end session '{session.session_id}' and start a new one.")
+        _clear_active_session_id()
+        return _get_active_session() # Recursively call to get a new session
+    elif action == '4':
+        log.info("User chose to quit.")
+        raise typer.Exit()
+    else:
+        log.error("Invalid choice. Aborting.")
+        raise typer.Exit(code=1)
+
+def _get_active_session() -> SQLiteSession:
+    """
+    Gets the active session, creating one if it doesn't exist.
+    Also handles token limit checks.
+    """
+    session_id = _get_active_session_id()
+    if not session_id:
+        session_id = f"auto_session_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+        _set_active_session_id(session_id)
+        log.warning(f"No active session found. Started new session: '{session_id}'")
+        typer.secho(f"Warning: No active session. Started new session: '{session_id}'", fg=typer.colors.YELLOW)
+    
+    session = SQLiteSession(session_id=session_id, db_path=SESSION_DB_FILE)
+    
+    token_count = get_session_token_count(session)
+    if token_count > TOKEN_LIMIT:
+        session = _handle_token_limit(session)
+        
+    return session
+
+# --- Refactored Session CLI Commands ---
+
 @session_app.command("start")
-def session_start(name: str = typer.Argument(..., help="The name for the session.")):
+def session_start(session_id: str = typer.Argument(..., help="The name for the session.")):
     """Starts or switches to a named session."""
-    set_active_session(name)
-    log.success(f"Session '{name}' is now active.")
-    typer.echo(f"Session '{name}' is now active.")
+    _set_active_session_id(session_id)
+    log.success(f"Session '{session_id}' is now active.")
+    typer.echo(f"Session '{session_id}' is now active.")
 
 @session_app.command("status")
 def session_status():
     """Checks the currently active session."""
-    active_session = get_active_session()
-    if active_session:
-        log.info(f"Currently active session: '{active_session}'")
-        typer.echo(f"Currently active session: '{active_session}'")
+    session_id = _get_active_session_id()
+    if session_id:
+        session = SQLiteSession(session_id=session_id, db_path=SESSION_DB_FILE)
+        token_count = get_session_token_count(session)
+        log.info(f"Currently active session: '{session_id}' ({token_count} tokens)")
+        typer.echo(f"Active Session: '{session_id}'")
+        typer.echo(f"Token Count: {token_count}")
+        typer.echo(f"Database: {os.path.abspath(SESSION_DB_FILE)}")
     else:
         log.info("No active session.")
         typer.echo("No active session.")
 
 @session_app.command("end")
 def session_end():
-    """Ends the current session."""
-    active_session = get_active_session()
-    if active_session:
-        clear_active_session()
-        log.success(f"Session '{active_session}' has been ended.")
-        typer.echo(f"Session '{active_session}' has been ended.")
+    """Ends the current session, deactivating it."""
+    active_session_id = _get_active_session_id()
+    if active_session_id:
+        _clear_active_session_id()
+        log.success(f"Session '{active_session_id}' has been ended.")
+        typer.echo(f"Session '{active_session_id}' has been ended (history is preserved).")
     else:
         log.warning("No active session to end.")
         typer.echo("No active session to end.")
 
-@session_app.command("clear")
-def session_clear(name: str = typer.Argument(..., help="The name of the session to clear.")):
-    """Clears all history for a specific session."""
+@session_app.command("inspect")
+def session_inspect():
+    """Inspects the content of the active session."""
+    session_id = _get_active_session_id()
+    if not session_id:
+        log.warning("No active session to inspect.")
+        typer.echo("No active session to inspect.")
+        return
+
+    log.info(f"Inspecting session: '{session_id}'")
+    typer.echo(f"--- Inspecting Session: {session_id} ---")
+    
     try:
-        session_to_clear = SQLiteSession(session_id=name)
-        session_to_clear.clear()
-        log.success(f"History for session '{name}' has been cleared.")
-        typer.echo(f"History for session '{name}' has been cleared.")
+        session = SQLiteSession(session_id=session_id, db_path=SESSION_DB_FILE)
+        import asyncio
+        items = asyncio.run(session.get_items())
+        
+        if not items:
+            typer.echo("Session is empty.")
+            return
+            
+        # Pretty-print the JSON content
+        typer.echo(json.dumps(items, indent=2))
+
     except Exception as e:
-        log.error(f"Failed to clear session '{name}': {e}")
-        typer.echo(f"Error: Failed to clear session '{name}'.")
+        log.error(f"Failed to inspect session '{session_id}': {e}")
+        typer.echo(f"Error: Failed to inspect session '{session_id}'.")
+
+
+@session_app.command("clear")
+def session_clear():
+    """Permanently clears all history for the currently active session."""
+    session_id = _get_active_session_id()
+    if not session_id:
+        log.warning("No active session to clear.")
+        typer.echo("No active session to clear.")
+        return
+
+    if typer.confirm(f"Are you sure you want to permanently delete all history for session '{session_id}'?"):
+        try:
+            session_to_clear = SQLiteSession(session_id=session_id, db_path=SESSION_DB_FILE)
+            session_to_clear.clear()
+            log.success(f"History for session '{session_id}' has been cleared.")
+            typer.echo(f"History for session '{session_id}' has been cleared.")
+        except Exception as e:
+            log.error(f"Failed to clear session '{session_id}': {e}")
+            typer.echo(f"Error: Failed to clear session '{session_id}'.")
 
 def check_openai_api_key():
     if not os.getenv("OPENAI_API_KEY"):
@@ -154,10 +260,8 @@ def plan_content_command(
     Generates a strategic content plan using the Orchestrator Agent.
     """
     check_openai_api_key()
-    active_session_id = get_active_session()
-    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
-    if session:
-        log.info(f"Using active session: '{active_session_id}'")
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}'")
 
     log.info(f"Generating content plan for the next '{time_frame}'...")
     typer.echo(f"Generating content plan for the next '{time_frame}'...")
@@ -191,10 +295,8 @@ def plan_command(
     """
     validate_plan_params(for_time, num)
     check_openai_api_key()
-    active_session_id = get_active_session()
-    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
-    if session:
-        log.info(f"Using active session: '{active_session_id}'")
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}'")
     
     if for_time:
         log.info(f"Planning content ideas for the next '{for_time}'...")
@@ -229,10 +331,8 @@ def plan_and_develop_command(
     """
     validate_plan_params(for_time, num)
     check_openai_api_key()
-    active_session_id = get_active_session()
-    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
-    if session:
-        log.info(f"Using active session: '{active_session_id}'")
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}'")
 
     if for_time:
         log.info(f"Starting autonomous plan-and-develop for time frame: '{for_time}'...")
@@ -263,10 +363,8 @@ def report_brand_voice_command():
     Generates a comprehensive, human-readable report on the brand's voice.
     """
     check_openai_api_key()
-    active_session_id = get_active_session()
-    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
-    if session:
-        log.info(f"Using active session: '{active_session_id}'")
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}'")
 
     log.info("Generating brand voice report...")
     typer.echo("Generating brand voice report...")
@@ -290,10 +388,8 @@ def generate_ideas_command(
     Generates new post ideas using the Orchestrator Agent.
     """
     check_openai_api_key()
-    active_session_id = get_active_session()
-    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
-    if session:
-        log.info(f"Using active session: '{active_session_id}'")
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}'")
 
     log.info(f"Generating {num_ideas} ideas for pillar: '{pillar}'...")
     typer.echo(f"Generating {num_ideas} ideas for pillar: '{pillar}'...")
@@ -324,10 +420,8 @@ def develop_post_command(
     Develops a full post (caption + image prompts) based on a selected idea.
     """
     check_openai_api_key()
-    active_session_id = get_active_session()
-    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
-    if session:
-        log.info(f"Using active session: '{active_session_id}'")
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}'")
     
     idea = PostIdea(
         title=idea_title,
@@ -363,10 +457,8 @@ def refine_content_command(
     Refines a specific content component (caption or image prompt) using the Reviewer Agent.
     """
     check_openai_api_key()
-    active_session_id = get_active_session()
-    session = SQLiteSession(session_id=active_session_id) if active_session_id else None
-    if session:
-        log.info(f"Using active session: '{active_session_id}'")
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}'")
 
     # For simplicity, we'll pass a dummy post_context for now.
     # In a real app, this would be a more structured object.

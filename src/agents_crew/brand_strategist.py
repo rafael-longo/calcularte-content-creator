@@ -1,3 +1,4 @@
+import asyncio
 import chromadb
 from openai import OpenAI
 import os
@@ -205,7 +206,8 @@ class BrandStrategistAgent:
         log.debug(f"Passing the following context to ContentPlannerAgent:\n{user_input}")
 
         try:
-            result = Runner.run_sync(content_planner_agent, user_input, session=session)
+            # In a sync context, we must manually handle the event loop for the async runner
+            result = asyncio.run(Runner.run(content_planner_agent, user_input, session=session))
             plan = result.final_output
             if plan and plan.plan:
                 log.success(f"Content plan generated with {len(plan.plan)} posts.")
@@ -252,7 +254,8 @@ class BrandStrategistAgent:
         log.debug(f"Passing the following context to BrandReporterAgent:\n{user_input}")
 
         try:
-            result = Runner.run_sync(brand_reporter_agent, user_input, session=session)
+            # In a sync context, we must manually handle the event loop for the async runner
+            result = asyncio.run(Runner.run(brand_reporter_agent, user_input, session=session))
             report = result.final_output
             if report and report.executive_summary:
                 log.success("Brand voice report generated successfully.")
