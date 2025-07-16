@@ -27,6 +27,9 @@ Key Responsibilities:
 
 The user will provide the post concept, the caption, the number of prompts to generate, and the brand context.
 
+**Revision Workflow:**
+If you receive a `Feedback for revision` in the input, it means your previous set of prompts was reviewed and needs changes. Carefully analyze the feedback and rewrite the entire set of prompts to address the specific points raised. The goal is to improve the prompts based on the feedback provided.
+
 Output format must be a single JSON object that conforms to the `GeneratedImagePrompts` model, with the list of prompts nested under the `prompts` key.
 """,
     output_type=GeneratedImagePrompts,

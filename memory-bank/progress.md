@@ -37,13 +37,13 @@
 *   **On-Demand Brand Voice Reporting:** The system can generate a comprehensive, human-readable report on the brand's voice, tone, and style via the `report brand-voice` CLI command.
 *   **Deepened Inter-Agent Context Passing:** The `OrchestratorAgent` now provides more focused, specialized context to the `CopywriterAgent` by leveraging a new `get_specialized_context` method in the `BrandStrategistAgent`, enhancing the relevance of generated content.
 *   **Multi-Level, Color-Coded Logging:** Implemented a custom `loguru` based tracing processor to provide detailed, color-coded logs of agent activities, tool calls, LLM generations, and handoffs.
+*   **"LLM-as-a-Judge" Quality Loop:** Implemented an automated quality control loop using a new `EvaluatorAgent`. This loop reviews and requests self-correction on generated content before it is finalized, improving overall quality.
 
 ## 2. What's Left to Build
 
 The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
 
 **Enhancement Roadmap:**
-5.  **Implement "LLM-as-a-Judge" Quality Loop:** Add an automated quality control step.
 6.  **Implement Persistent Session Memory:** Make the CLI stateful using the SDK's `SQLiteSession`.
 7.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
 
@@ -51,7 +51,7 @@ After these enhancements are implemented, the project will proceed to the develo
 
 ## 3. Current Status
 
-The project has successfully completed the first four enhancements from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist", "Implement On-Demand Brand Voice Reporting", "Enable Flexible and Autonomous Post Generation", and "Deepen Inter-Agent Context Passing". The system's internal context handling is now more intelligent, leading to higher-quality outputs.
+The project has successfully completed the first five enhancements from the roadmap: "Evolve `BrandStrategistAgent` to True Strategist", "Implement On-Demand Brand Voice Reporting", "Enable Flexible and Autonomous Post Generation", "Deepen Inter-Agent Context Passing", and "Implement 'LLM-as-a-Judge' Quality Loop". The system's internal context handling and quality control are now more intelligent, leading to higher-quality outputs.
 
 ## 4. Known Issues
 

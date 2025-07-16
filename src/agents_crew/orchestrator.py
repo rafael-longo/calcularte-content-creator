@@ -1,12 +1,13 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Type
 from datetime import date
-from agents import Runner
-from pydantic import TypeAdapter
+from agents import Runner, Agent
+from pydantic import TypeAdapter, BaseModel
 from src.agents_crew.brand_strategist import BrandStrategistAgent, ContentPlan, BrandVoiceReport, PlannedPost
 from src.agents_crew.creative_director import creative_director_agent, PostIdea, GeneratedIdeas
 from src.agents_crew.copywriter import copywriter_agent
 from src.agents_crew.art_director import art_director_agent, ImagePrompt, GeneratedImagePrompts
 from src.agents_crew.reviewer import reviewer_agent
+from src.agents_crew.evaluator import evaluator_agent, EvaluationResult
 from src.utils.logging import log
 
 class OrchestratorAgent:
@@ -16,6 +17,7 @@ class OrchestratorAgent:
         self.copywriter = copywriter_agent
         self.art_director = art_director_agent
         self.reviewer = reviewer_agent
+        self.evaluator = evaluator_agent
 
     def _get_brand_context(self, query: str) -> Dict[str, Any]:
         """Fetches relevant brand context using the BrandStrategistAgent."""
@@ -237,44 +239,101 @@ class OrchestratorAgent:
                 formatted_str += f"- {key.replace('_', ' ').title()}: {value}\n"
         return formatted_str.strip()
 
+    def _evaluate_and_refine_content(self, creator_agent: Agent, initial_input: str, content_type: str, max_retries: int = 2) -> Any:
+        """
+        A generic quality control loop that uses an EvaluatorAgent to refine content.
+        It can handle both string and Pydantic model outputs.
+        """
+        log.info(f"Starting evaluation and refinement loop for {content_type}...")
+        current_content = None
+        feedback = ""
+
+        for i in range(max_retries):
+            log.info(f"Attempt {i+1}/{max_retries} to generate and evaluate {content_type}.")
+
+            revised_input = f"{initial_input}\n\nFeedback for revision: {feedback}" if feedback else initial_input
+
+            try:
+                result = Runner.run_sync(creator_agent, revised_input)
+                current_content = result.final_output
+                if not current_content:
+                    raise ValueError("Creator agent returned empty content.")
+                log.success(f"{content_type.capitalize()} generated.")
+            except Exception as e:
+                log.error(f"Error running {creator_agent.name}: {e}")
+                return None
+
+            content_to_evaluate_str = ""
+            if isinstance(current_content, str):
+                content_to_evaluate_str = current_content
+            elif isinstance(current_content, BaseModel):
+                # Convert Pydantic model to a descriptive string for evaluation
+                if hasattr(current_content, 'prompts'): # Specific to GeneratedImagePrompts
+                    content_to_evaluate_str = "\n".join([p.prompt for p in current_content.prompts])
+                else:
+                    content_to_evaluate_str = current_content.model_dump_json(indent=2)
+            
+            brand_principles = self.generate_brand_voice_report()
+            evaluator_input = f"""
+            Content to evaluate:
+            ---
+            {content_to_evaluate_str}
+            ---
+            Content Type: {content_type}
+            Brand Principles:
+            ---
+            {brand_principles}
+            ---
+            """
+            log.info(f"Evaluating {content_type}...")
+            try:
+                eval_result = Runner.run_sync(self.evaluator, evaluator_input)
+                evaluation: EvaluationResult = eval_result.final_output
+                log.info(f"Evaluation result: {evaluation.score}")
+
+                if evaluation.score == "approved":
+                    log.success(f"{content_type.capitalize()} approved after {i+1} attempts.")
+                    return current_content
+                else:
+                    feedback = evaluation.feedback
+                    log.warning(f"Content needs improvement. Feedback: {feedback}")
+
+            except Exception as e:
+                log.error(f"Error running EvaluatorAgent: {e}")
+                return current_content
+
+        log.warning(f"Max retries reached for {content_type}. Returning last generated content.")
+        return current_content
+
     def develop_post(self, idea: PostIdea, num_image_prompts: int = 3) -> Dict[str, Any]:
         """
-        Develops a full post (caption + image prompts) based on a selected idea.
+        Develops a full post (caption + image prompts) based on a selected idea,
+        including a quality control loop.
         """
         log.info(f"Developing post for idea: '{idea.title}'...")
-        
-        # Step 1: Get specialized context for the caption
+
+        # Step 1: Generate and refine caption
         copywriting_context = self.brand_strategist.get_specialized_context(
             context_type="relevant captions for a post",
             query=f"{idea.title} - {idea.defense_of_idea}"
         )
-
-        # Step 2: Generate caption using CopywriterAgent with specialized context
-        log.info("Writing caption...")
         contextual_examples_str = "\n- ".join(copywriting_context)
-        copywriter_input = f"""
+        copywriter_initial_input = f"""
         Idea Title: "{idea.title}"
         Idea Defense: "{idea.defense_of_idea}"
 
         Contextual Examples of Relevant Captions:
         - {contextual_examples_str}
         """
-        log.debug(f"Passing the following context to CopywriterAgent:\n{copywriter_input}")
-        try:
-            result = Runner.run_sync(self.copywriter, copywriter_input)
-            caption = result.final_output
-            log.success("Caption written successfully.")
-        except Exception as e:
-            log.error(f"Error running CopywriterAgent: {e}")
-            caption = "Error generating caption."
+        caption = self._evaluate_and_refine_content(
+            creator_agent=self.copywriter,
+            initial_input=copywriter_initial_input,
+            content_type="caption"
+        ) or "Error generating caption."
 
-        # Step 3: Generate image prompts using ArtDirectorAgent
-        log.info("Generating image prompts...")
-
-        # For the Art Director, we still use the general context as there's no visual data in the DB
+        # Step 2: Generate and refine image prompts
         brand_context = self._get_brand_context(idea.title + " " + idea.defense_of_idea)
-        
-        art_director_input = f"""
+        art_director_initial_input = f"""
         Pydantic Schema for the output:
         ```json
         {GeneratedImagePrompts.model_json_schema()}
@@ -287,15 +346,13 @@ class OrchestratorAgent:
         Brand Context:
         {self._format_context(brand_context)}
         """
-        log.debug(f"Passing the following context to ArtDirectorAgent:\n{art_director_input}")
-        try:
-            result = Runner.run_sync(self.art_director, art_director_input)
-            prompts_obj = result.final_output
-            image_prompts = prompts_obj.prompts if prompts_obj else []
-            log.success(f"Generated {len(image_prompts)} image prompts.")
-        except Exception as e:
-            log.error(f"Error running ArtDirectorAgent: {e}")
-            image_prompts = []
+        image_prompts_obj = self._evaluate_and_refine_content(
+            creator_agent=self.art_director,
+            initial_input=art_director_initial_input,
+            content_type="image_prompts"
+        )
+        
+        image_prompts = image_prompts_obj.prompts if image_prompts_obj else []
 
         return {
             "idea": idea,

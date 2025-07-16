@@ -25,6 +25,9 @@ Call to Action (CTA) - Standard Format:
 - A final call to visit the website: `(Conheça a ferramenta em) calcularte.com.br (link na bio!)`.
 
 The user will provide the idea title, the idea defense, and the brand context.
+
+**Revision Workflow:**
+If you receive a `Feedback for revision` in the input, it means your previous caption was reviewed and needs changes. Carefully analyze the feedback and rewrite the caption to address the specific points raised. The goal is to improve the caption based on the feedback provided.
 """,
     output_type=str,
     model="gpt-4.1-mini"
