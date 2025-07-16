@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict
 from datetime import date
 from agents import Agent, Runner
+from src.utils.logging import log
 
 # Load environment variables
 load_dotenv()
@@ -100,8 +101,9 @@ class BrandStrategistAgent:
         self.collection_name = "calcularte_posts"
         try:
             self.collection = self.chroma_client.get_collection(name=self.collection_name)
-        except:
-            print(f"Collection '{self.collection_name}' not found. Please run data ingestion first.")
+            log.info(f"Successfully connected to ChromaDB collection: '{self.collection_name}'.")
+        except Exception as e:
+            log.warning(f"Collection '{self.collection_name}' not found. Please run data ingestion first. Error: {e}")
             self.collection = None
 
     def get_embedding(self, text: str, model: str = "text-embedding-3-small"):
@@ -116,8 +118,10 @@ class BrandStrategistAgent:
         Returns the most relevant captions and their metadata.
         """
         if not self.collection:
+            log.error("Brand voice collection not initialized. Cannot query.")
             return "Brand voice collection not initialized. Please ingest data."
 
+        log.debug(f"Querying brand voice with text: '{query_text}'")
         query_embedding = self.get_embedding(query_text)
         
         results = self.collection.query(
@@ -135,6 +139,7 @@ class BrandStrategistAgent:
                 }
                 relevant_content.append(content)
         
+        log.debug(f"Found {len(relevant_content)} relevant documents.")
         return relevant_content
 
     def get_specialized_context(self, context_type: str, query: str, num_samples: int = 3) -> List[str]:
@@ -142,15 +147,19 @@ class BrandStrategistAgent:
         Retrieves specialized context from the vector database based on a type and query.
         """
         if not self.collection:
+            log.error("Brand voice collection not initialized. Cannot get specialized context.")
             return ["Brand voice collection not initialized. Please ingest data."]
 
         # Craft a more specific query for the vector database
         specialized_query = f"Find examples of '{context_type}' related to the topic: '{query}'"
+        log.info(f"Fetching specialized context with query: '{specialized_query}'")
         
         results = self.query_brand_voice(specialized_query, n_results=num_samples)
 
         # Return only the captions for focused context
-        return [item['caption'] for item in results if 'caption' in item]
+        captions = [item['caption'] for item in results if 'caption' in item]
+        log.debug(f"Found {len(captions)} specialized context examples.")
+        return captions
 
     def propose_content_plan(self, time_frame: Optional[str], current_date: date, recent_post_themes: Optional[list] = None, num_posts: Optional[int] = None) -> ContentPlan:
         """
@@ -158,8 +167,10 @@ class BrandStrategistAgent:
         Can be driven by a time_frame or a specific number of posts.
         """
         if not self.collection:
+            log.error("Brand voice collection not initialized. Cannot propose content plan.")
             return ContentPlan(plan=[])
 
+        log.info(f"Proposing content plan for time_frame='{time_frame}' or num_posts='{num_posts}'.")
         seasonal_context = f"Today's date is {current_date.strftime('%Y-%m-%d')}."
         variety_context = f"Avoid these recent themes: {', '.join(recent_post_themes or [])}."
         
@@ -191,12 +202,18 @@ class BrandStrategistAgent:
 
         {request_params}
         """
+        log.debug(f"Passing the following context to ContentPlannerAgent:\n{user_input}")
 
         try:
             result = Runner.run_sync(content_planner_agent, user_input)
-            return result.final_output if result.final_output else ContentPlan(plan=[])
+            plan = result.final_output
+            if plan and plan.plan:
+                log.success(f"Content plan generated with {len(plan.plan)} posts.")
+            else:
+                log.warning("ContentPlannerAgent returned an empty or invalid plan.")
+            return plan if plan else ContentPlan(plan=[])
         except Exception as e:
-            print(f"Error running content_planner_agent: {e}")
+            log.error(f"Error running content_planner_agent: {e}")
             return ContentPlan(plan=[])
 
     def generate_brand_voice_report(self) -> BrandVoiceReport:
@@ -204,13 +221,19 @@ class BrandStrategistAgent:
         Analyzes the brand's voice and generates a report using the brand_reporter_agent.
         """
         if not self.collection:
+            log.error("Brand voice collection not initialized. Cannot generate report.")
             return BrandVoiceReport(executive_summary="Brand voice collection not initialized.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
 
+        log.info("Generating brand voice report...")
         try:
+            log.debug("Retrieving up to 100 sample posts from ChromaDB.")
             sample_posts = self.collection.get(limit=100, include=['documents', 'metadatas'])
             if not sample_posts or not sample_posts.get('documents'):
+                log.error("No documents found in the collection to generate a report.")
                 raise ValueError("No documents found in the collection.")
+            log.debug(f"Retrieved {len(sample_posts['documents'])} posts for analysis.")
         except Exception as e:
+            log.error(f"Error retrieving data for brand voice report: {e}")
             return BrandVoiceReport(executive_summary=f"Error retrieving data: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
 
         sampled_content_str = "\n".join(
@@ -226,12 +249,18 @@ class BrandStrategistAgent:
         Sampled Content for Analysis:
         {sampled_content_str}
         """
+        log.debug(f"Passing the following context to BrandReporterAgent:\n{user_input}")
 
         try:
             result = Runner.run_sync(brand_reporter_agent, user_input)
-            return result.final_output if result.final_output else BrandVoiceReport(executive_summary="Failed to generate report.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
+            report = result.final_output
+            if report and report.executive_summary:
+                log.success("Brand voice report generated successfully.")
+            else:
+                log.warning("BrandReporterAgent returned an empty or invalid report.")
+            return report if report else BrandVoiceReport(executive_summary="Failed to generate report.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
         except Exception as e:
-            print(f"Error running brand_reporter_agent: {e}")
+            log.error(f"Error running brand_reporter_agent: {e}")
             return BrandVoiceReport(executive_summary=f"Error generating report: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
 
 

@@ -7,6 +7,7 @@ from src.agents_crew.creative_director import creative_director_agent, PostIdea,
 from src.agents_crew.copywriter import copywriter_agent
 from src.agents_crew.art_director import art_director_agent, ImagePrompt, GeneratedImagePrompts
 from src.agents_crew.reviewer import reviewer_agent
+from src.utils.logging import log
 
 class OrchestratorAgent:
     def __init__(self):
@@ -18,7 +19,7 @@ class OrchestratorAgent:
 
     def _get_brand_context(self, query: str) -> Dict[str, Any]:
         """Fetches relevant brand context using the BrandStrategistAgent."""
-        print(f"Orchestrator: Fetching brand context for query: '{query}'...")
+        log.info(f"Fetching brand context for query: '{query}'...")
         context_results = self.brand_strategist.query_brand_voice(query, n_results=5)
         
         # Process context_results into a more usable dictionary format for other agents
@@ -30,7 +31,7 @@ class OrchestratorAgent:
         }
 
         if isinstance(context_results, str): # Error from BrandStrategistAgent
-            print(f"Orchestrator: Error fetching brand context: {context_results}")
+            log.error(f"Error fetching brand context: {context_results}")
             return brand_context # Return empty context
 
         for item in context_results:
@@ -42,7 +43,7 @@ class OrchestratorAgent:
         # Deduplicate hashtags
         brand_context["hashtag_examples"] = list(set(brand_context["hashtag_examples"]))
         
-        print("Orchestrator: Brand context fetched.")
+        log.info("Brand context fetched.")
         return brand_context
 
     def plan_content(self, time_frame: str = None, num_posts: int = None) -> ContentPlan:
@@ -50,9 +51,9 @@ class OrchestratorAgent:
         Generates a strategic content plan by coordinating with the BrandStrategistAgent.
         """
         if num_posts:
-            print(f"Orchestrator: Generating content plan for {num_posts} posts...")
+            log.info(f"Generating content plan for {num_posts} posts...")
         else:
-            print(f"Orchestrator: Generating content plan for '{time_frame}'...")
+            log.info(f"Generating content plan for '{time_frame}'...")
         
         current_date = date.today()
         content_plan = self.brand_strategist.propose_content_plan(
@@ -61,23 +62,24 @@ class OrchestratorAgent:
             recent_post_themes=None,
             num_posts=num_posts
         )
-        print("Orchestrator: Content plan generated.")
+        log.info("Content plan generated.")
         return content_plan
 
     def generate_brand_voice_report(self) -> str:
         """
         Generates and formats a comprehensive brand voice report.
         """
-        print("Orchestrator: Generating brand voice report...")
+        log.info("Generating brand voice report...")
         
         # 1. Trigger the report generation from the BrandStrategistAgent
         report_data = self.brand_strategist.generate_brand_voice_report()
         
         if not report_data or not report_data.executive_summary:
+            log.error("Could not generate the brand voice report. The data from the strategist was empty.")
             return "Could not generate the brand voice report. The data from the strategist was empty."
 
         # 2. Format the Pydantic object into a human-readable Markdown report
-        print("Orchestrator: Formatting report into Markdown...")
+        log.info("Formatting report into Markdown...")
         
         markdown_report = f"""
 # **Calcularte Brand Voice Report**
@@ -118,31 +120,31 @@ class OrchestratorAgent:
 ## **7. Hashtag Strategy Summary**
 {report_data.hashtag_strategy_summary}
 """
-        print("Orchestrator: Report formatted.")
+        log.success("Report formatted successfully.")
         return markdown_report.strip()
 
     def plan_content_ideas(self, time_frame: str = None, num_ideas: int = None) -> List[PostIdea]:
         """
         Generates a list of post ideas based on a strategic content plan.
         """
-        print("Orchestrator: Planning content ideas...")
+        log.info("Planning content ideas...")
         
         # 1. Get the strategic plan from the BrandStrategist
         plan = self.plan_content(time_frame=time_frame, num_posts=num_ideas)
         if not plan or not plan.plan:
-            print("Orchestrator: Could not generate a content plan. Aborting idea generation.")
+            log.error("Could not generate a content plan. Aborting idea generation.")
             return []
 
         # If num_ideas is specified, truncate the plan, otherwise use the full plan
         planned_posts = plan.plan
         if num_ideas is not None and num_ideas > 0:
             planned_posts = planned_posts[:num_ideas]
-            print(f"Orchestrator: Limiting idea generation to {num_ideas} planned posts.")
+            log.info(f"Limiting idea generation to {num_ideas} planned posts.")
 
         # 2. Iterate through the plan and generate one idea for each point
         all_ideas = []
         for planned_post in planned_posts:
-            print(f"Orchestrator: Generating idea for pillar: '{planned_post.pillar}'...")
+            log.info(f"Generating idea for pillar: '{planned_post.pillar}'...")
             # The generate_ideas method already handles getting brand context.
             # We pass the planned_post object to be used as additional context.
             ideas = self.generate_ideas(
@@ -153,19 +155,19 @@ class OrchestratorAgent:
             if ideas:
                 all_ideas.extend(ideas)
         
-        print(f"Orchestrator: Total of {len(all_ideas)} ideas planned.")
+        log.success(f"Total of {len(all_ideas)} ideas planned.")
         return all_ideas
 
     def plan_and_develop_content(self, time_frame: str = None, num_ideas: int = None) -> List[Dict[str, Any]]:
         """
         Autonomously plans and develops a full content calendar.
         """
-        print("Orchestrator: Starting autonomous plan-and-develop workflow...")
+        log.info("Starting autonomous plan-and-develop workflow...")
         
         # 1. Plan all the content ideas first
         ideas_to_develop = self.plan_content_ideas(time_frame=time_frame, num_ideas=num_ideas)
         if not ideas_to_develop:
-            print("Orchestrator: No ideas were generated, cannot develop content.")
+            log.error("No ideas were generated, cannot develop content.")
             return []
 
         # 2. Develop each idea into a full post
@@ -174,7 +176,7 @@ class OrchestratorAgent:
             full_post = self.develop_post(idea)
             developed_posts.append(full_post)
             
-        print("Orchestrator: Autonomous plan-and-develop workflow complete.")
+        log.success("Autonomous plan-and-develop workflow complete.")
         return developed_posts
 
     def generate_ideas(self, content_pillar: str, num_ideas: int = 3, planned_post: PlannedPost = None) -> List[PostIdea]:
@@ -182,12 +184,13 @@ class OrchestratorAgent:
         Generates new post ideas by coordinating with the CreativeDirectorAgent.
         Can optionally take a `planned_post` object for more specific context.
         """
-        print(f"Orchestrator: Generating {num_ideas} ideas for content pillar: '{content_pillar}'...")
+        log.info(f"Generating {num_ideas} ideas for content pillar: '{content_pillar}'...")
         brand_context = self._get_brand_context(content_pillar)
         
         # Add planned_post context if available
         if planned_post:
             brand_context['strategic_context'] = planned_post.model_dump()
+            log.debug(f"Added strategic context from planned post: {planned_post.pillar}")
 
         # Construct the input for the agent
         user_input = f"""
@@ -202,19 +205,20 @@ class OrchestratorAgent:
         Brand Context:
         {self._format_context(brand_context)}
         """
+        log.debug(f"Passing the following context to CreativeDirectorAgent:\n{user_input}")
 
         # Run the agent using the Agents SDK Runner
         try:
             result = Runner.run_sync(self.creative_director, user_input)
             ideas_obj = result.final_output
             if ideas_obj and isinstance(ideas_obj, GeneratedIdeas):
-                print("Orchestrator: Ideas generated.")
+                log.success(f"Received {len(ideas_obj.ideas)} ideas from CreativeDirectorAgent.")
                 return ideas_obj.ideas
             else:
-                print("Orchestrator: No ideas generated or incorrect format received.")
+                log.error("No ideas generated or incorrect format received from CreativeDirectorAgent.")
                 return []
         except Exception as e:
-            print(f"Orchestrator: Error running CreativeDirectorAgent: {e}")
+            log.error(f"Error running CreativeDirectorAgent: {e}")
             return []
 
     def _format_context(self, context: Dict[str, Any]) -> str:
@@ -237,7 +241,7 @@ class OrchestratorAgent:
         """
         Develops a full post (caption + image prompts) based on a selected idea.
         """
-        print(f"Orchestrator: Developing post for idea: '{idea.title}'...")
+        log.info(f"Developing post for idea: '{idea.title}'...")
         
         # Step 1: Get specialized context for the caption
         copywriting_context = self.brand_strategist.get_specialized_context(
@@ -246,7 +250,7 @@ class OrchestratorAgent:
         )
 
         # Step 2: Generate caption using CopywriterAgent with specialized context
-        print("Orchestrator: Writing caption...")
+        log.info("Writing caption...")
         contextual_examples_str = "\n- ".join(copywriting_context)
         copywriter_input = f"""
         Idea Title: "{idea.title}"
@@ -255,16 +259,17 @@ class OrchestratorAgent:
         Contextual Examples of Relevant Captions:
         - {contextual_examples_str}
         """
+        log.debug(f"Passing the following context to CopywriterAgent:\n{copywriter_input}")
         try:
             result = Runner.run_sync(self.copywriter, copywriter_input)
             caption = result.final_output
-            print("Orchestrator: Caption written.")
+            log.success("Caption written successfully.")
         except Exception as e:
-            print(f"Orchestrator: Error running CopywriterAgent: {e}")
+            log.error(f"Error running CopywriterAgent: {e}")
             caption = "Error generating caption."
 
         # Step 3: Generate image prompts using ArtDirectorAgent
-        print("Orchestrator: Generating image prompts...")
+        log.info("Generating image prompts...")
 
         # For the Art Director, we still use the general context as there's no visual data in the DB
         brand_context = self._get_brand_context(idea.title + " " + idea.defense_of_idea)
@@ -282,13 +287,14 @@ class OrchestratorAgent:
         Brand Context:
         {self._format_context(brand_context)}
         """
+        log.debug(f"Passing the following context to ArtDirectorAgent:\n{art_director_input}")
         try:
             result = Runner.run_sync(self.art_director, art_director_input)
             prompts_obj = result.final_output
             image_prompts = prompts_obj.prompts if prompts_obj else []
-            print("Orchestrator: Image prompts generated.")
+            log.success(f"Generated {len(image_prompts)} image prompts.")
         except Exception as e:
-            print(f"Orchestrator: Error running ArtDirectorAgent: {e}")
+            log.error(f"Error running ArtDirectorAgent: {e}")
             image_prompts = []
 
         return {
@@ -301,7 +307,7 @@ class OrchestratorAgent:
         """
         Refines a specific content component using the ReviewerAgent.
         """
-        print(f"Orchestrator: Refining {component_type} with user feedback...")
+        log.info(f"Refining {component_type} with user feedback: '{user_feedback}'...")
         brand_context = self._get_brand_context(user_feedback) # Get context based on feedback
         
         reviewer_input = f"""
@@ -322,14 +328,15 @@ class OrchestratorAgent:
 
         Please provide the revised content.
         """
+        log.debug(f"Passing the following context to ReviewerAgent:\n{reviewer_input}")
         
         try:
             result = Runner.run_sync(self.reviewer, reviewer_input)
             revised_content = result.final_output
-            print(f"Orchestrator: {component_type} refined.")
+            log.success(f"{component_type.capitalize()} refined successfully.")
             return revised_content
         except Exception as e:
-            print(f"Orchestrator: Error running ReviewerAgent: {e}")
+            log.error(f"Error running ReviewerAgent: {e}")
             return "Error refining content."
 
 if __name__ == "__main__":

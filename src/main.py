@@ -23,6 +23,7 @@ orchestrator = OrchestratorAgent() # Initialize OrchestratorAgent once
 
 def check_openai_api_key():
     if not os.getenv("OPENAI_API_KEY"):
+        log.error("OPENAI_API_KEY environment variable not set.")
         typer.echo("Error: OPENAI_API_KEY environment variable not set.")
         typer.echo("Please set it in your .env file or as an environment variable.")
         raise typer.Exit(code=1)
@@ -46,6 +47,7 @@ def ingest(
         file_path = "dataset_instagram_calcularte_profile.jsonl"
     
     ingest_data(file_path)
+    log.success("Data ingestion process finished.")
     typer.echo("Data ingestion process finished.")
 
 @app.command("ask-strategist")
@@ -59,9 +61,11 @@ def ask_strategist_command(
 
     strategist = BrandStrategistAgent()
     if strategist.collection:
+        log.info(f"Querying Brand Strategist with: '{query}'")
         typer.echo(f"Querying Brand Strategist with: '{query}'")
         results = strategist.query_brand_voice(query)
         if isinstance(results, str): # Handle error message from agent
+            log.error(f"Error from BrandStrategistAgent: {results}")
             typer.echo(results)
         elif results:
             typer.echo("\n--- Relevant Brand Content ---")
@@ -72,8 +76,10 @@ def ask_strategist_command(
                 typer.echo(f"URL: {item['metadata'].get('url', 'N/A')}")
                 typer.echo("---")
         else:
+            log.info("No relevant content found for query.")
             typer.echo("No relevant content found.")
     else:
+        log.warning("Brand Strategist Agent not ready. User advised to run 'ingest' command.")
         typer.echo("Brand Strategist Agent not ready. Please run 'ingest' command first.")
 
 @app.command("plan-content")
@@ -84,10 +90,12 @@ def plan_content_command(
     Generates a strategic content plan using the Orchestrator Agent.
     """
     check_openai_api_key()
+    log.info(f"Generating content plan for the next '{time_frame}'...")
     typer.echo(f"Generating content plan for the next '{time_frame}'...")
     plan = orchestrator.plan_content(time_frame)
     
     if plan and plan.plan:
+        log.success(f"Successfully generated content plan with {len(plan.plan)} posts.")
         typer.echo("\n--- Strategic Content Plan ---")
         for post in plan.plan:
             typer.echo(f"Day/Sequence: {post.day_or_sequence}")
@@ -95,6 +103,7 @@ def plan_content_command(
             typer.echo(f"  Reasoning: {post.reasoning}")
             typer.echo("---")
     else:
+        log.error("Failed to generate content plan.")
         typer.echo("Failed to generate content plan.")
 
 def validate_plan_params(for_time: str, num: int):
@@ -115,13 +124,16 @@ def plan_command(
     check_openai_api_key()
     
     if for_time:
+        log.info(f"Planning content ideas for the next '{for_time}'...")
         typer.echo(f"Planning content ideas for the next '{for_time}'...")
         ideas = orchestrator.plan_content_ideas(time_frame=for_time)
     else:
+        log.info(f"Planning {num} content ideas...")
         typer.echo(f"Planning {num} content ideas...")
         ideas = orchestrator.plan_content_ideas(num_ideas=num)
 
     if ideas:
+        log.success(f"Successfully planned {len(ideas)} ideas.")
         typer.echo("\n--- Planned Ideas ---")
         for i, idea in enumerate(ideas):
             typer.echo(f"Idea {i+1}:")
@@ -131,6 +143,7 @@ def plan_command(
             typer.echo(f"  Expected Results: {idea.expected_results}")
             typer.echo("---")
     else:
+        log.warning("No ideas were planned.")
         typer.echo("No ideas were planned.")
 
 @app.command("plan-and-develop")
@@ -145,13 +158,16 @@ def plan_and_develop_command(
     check_openai_api_key()
 
     if for_time:
+        log.info(f"Starting autonomous plan-and-develop for time frame: '{for_time}'...")
         typer.echo(f"Autonomously planning and developing content for the next '{for_time}'...")
         developed_posts = orchestrator.plan_and_develop_content(time_frame=for_time)
     else:
+        log.info(f"Starting autonomous plan-and-develop for {num} posts...")
         typer.echo(f"Autonomously planning and developing {num} posts...")
         developed_posts = orchestrator.plan_and_develop_content(num_ideas=num)
 
     if developed_posts:
+        log.success(f"Successfully developed {len(developed_posts)} posts.")
         typer.echo("\n--- Autonomously Developed Content Calendar ---")
         for i, post in enumerate(developed_posts):
             typer.echo(f"--- Post {i+1}: {post['idea'].title} ---")
@@ -161,6 +177,7 @@ def plan_and_develop_command(
                 typer.echo(f"  - Prompt {j+1}: {prompt}")
             typer.echo("\n" + "="*40 + "\n")
     else:
+        log.error("No content was developed.")
         typer.echo("No content was developed.")
 
 @report_app.command("brand-voice")
@@ -169,14 +186,17 @@ def report_brand_voice_command():
     Generates a comprehensive, human-readable report on the brand's voice.
     """
     check_openai_api_key()
+    log.info("Generating brand voice report...")
     typer.echo("Generating brand voice report...")
     report = orchestrator.generate_brand_voice_report()
     
-    if report:
+    if report and "Could not generate" not in report:
+        log.success("Successfully generated brand voice report.")
         typer.echo("\n--- Brand Voice Report ---")
         typer.echo(report)
         typer.echo("--------------------------")
     else:
+        log.error("Failed to generate brand voice report.")
         typer.echo("Failed to generate brand voice report.")
 
 @app.command("generate-ideas")
@@ -188,9 +208,11 @@ def generate_ideas_command(
     Generates new post ideas using the Orchestrator Agent.
     """
     check_openai_api_key()
+    log.info(f"Generating {num_ideas} ideas for pillar: '{pillar}'...")
     typer.echo(f"Generating {num_ideas} ideas for pillar: '{pillar}'...")
     ideas = orchestrator.generate_ideas(pillar, num_ideas)
     if ideas:
+        log.success(f"Successfully generated {len(ideas)} ideas.")
         typer.echo("\n--- Generated Ideas ---")
         for i, idea in enumerate(ideas):
             typer.echo(f"Idea {i+1}:")
@@ -200,6 +222,7 @@ def generate_ideas_command(
             typer.echo(f"  Expected Results: {idea.expected_results}")
             typer.echo("---")
     else:
+        log.error("No ideas generated.")
         typer.echo("No ideas generated.")
 
 @app.command("develop-post")
@@ -222,10 +245,12 @@ def develop_post_command(
         expected_results=idea_results
     )
     
+    log.info(f"Developing full post for idea: '{idea.title}'...")
     typer.echo(f"Developing full post for idea: '{idea.title}'...")
     full_post = orchestrator.develop_post(idea, num_image_prompts)
     
-    if full_post:
+    if full_post and full_post.get('caption') and "Error" not in full_post['caption']:
+        log.success("Successfully developed post.")
         typer.echo("\n--- Developed Post ---")
         typer.echo(f"Caption:\n{full_post['caption']}")
         typer.echo("\nImage Prompts:")
@@ -233,6 +258,7 @@ def develop_post_command(
             typer.echo(f"Prompt {i+1}: {prompt}")
         typer.echo("---")
     else:
+        log.error("Failed to develop post.")
         typer.echo("Failed to develop post.")
 
 @app.command("refine-content")
@@ -251,14 +277,17 @@ def refine_content_command(
     # In a real app, this would be a more structured object.
     post_context = {"query_for_context": post_context_query if post_context_query else original_content}
 
+    log.info(f"Refining {component_type}...")
     typer.echo(f"Refining {component_type}...")
     revised_content = orchestrator.refine_content(component_type, original_content, user_feedback, post_context)
     
-    if revised_content:
+    if revised_content and "Error" not in revised_content:
+        log.success(f"Successfully refined {component_type}.")
         typer.echo(f"\n--- Revised {component_type.capitalize()} ---")
         typer.echo(revised_content)
         typer.echo("---")
     else:
+        log.error(f"Failed to refine {component_type}.")
         typer.echo(f"Failed to refine {component_type}.")
 
 if __name__ == "__main__":
