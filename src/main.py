@@ -2,15 +2,18 @@ import typer
 import os
 from dotenv import load_dotenv
 from typing import Optional
-import typer
-import os
-from dotenv import load_dotenv
+from agents.tracing import add_trace_processor
 from scripts.ingest_data import ingest_data
 from src.agents_crew.brand_strategist import BrandStrategistAgent
 from src.agents_crew.orchestrator import OrchestratorAgent, PostIdea
+from src.utils.logging import CustomLoguruProcessor, log
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Initialize custom logging
+add_trace_processor(CustomLoguruProcessor())
+log.info("Custom logging initialized and trace processor added.")
 
 app = typer.Typer()
 report_app = typer.Typer()

@@ -36,6 +36,7 @@
 *   **Strategic Content Planning:** The `BrandStrategistAgent` can now generate proactive, strategic content plans based on seasonality and historical data, accessible via the `plan-content` CLI command.
 *   **On-Demand Brand Voice Reporting:** The system can generate a comprehensive, human-readable report on the brand's voice, tone, and style via the `report brand-voice` CLI command.
 *   **Deepened Inter-Agent Context Passing:** The `OrchestratorAgent` now provides more focused, specialized context to the `CopywriterAgent` by leveraging a new `get_specialized_context` method in the `BrandStrategistAgent`, enhancing the relevance of generated content.
+*   **Multi-Level, Color-Coded Logging:** Implemented a custom `loguru` based tracing processor to provide detailed, color-coded logs of agent activities, tool calls, LLM generations, and handoffs.
 
 ## 2. What's Left to Build
 

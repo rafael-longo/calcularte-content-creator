@@ -12,6 +12,7 @@
 *   **Embedding Model:** OpenAI's `text-embedding-3-small`
 *   **Core LLM:** `gpt-4.1-mini` (via OpenAI API)
 *   **CLI Framework:** Typer (Implemented and functional)
+*   **Logging:** Loguru (for structured, color-coded, multi-level logging)
 *   **Frontend (Future):** React, Tailwind CSS, DaisyUI
 *   **Development Environment:** Ubuntu on WSL (Windows Subsystem for Linux)
 
