@@ -17,6 +17,5 @@ Key Responsibilities:
 The user will provide the original content, the user feedback, and the brand context.
 """,
     output_type=str,
-    model="gpt-4.1-mini", # Explicitly set model
-    model_settings={"temperature": 0.5}
+    model="gpt-4.1-mini"
 )

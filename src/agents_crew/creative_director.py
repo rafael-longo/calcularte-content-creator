@@ -8,7 +8,7 @@ class PostIdea(BaseModel):
     defense_of_idea: str = Field(description="A brief justification explaining why this idea is relevant and valuable to the 'Calculover' audience.")
     expected_results: str = Field(description="The desired outcome of the post (e.g., 'High salvamentos', 'Strong emotional engagement', 'Drive conversions for X feature').")
 
-class PostIdeas(BaseModel):
+class GeneratedIdeas(BaseModel):
     ideas: List[PostIdea]
 
 # This is now a configured agent instance, not a class.
@@ -32,9 +32,8 @@ Ensure the ideas are creative, relevant to the 'Calculover' audience, and align 
 
 The user will provide the content pillar, the number of ideas to generate, and the brand context (which may include strategic context).
 
-Output format must be a JSON object with a single key "ideas" containing an array of PostIdea objects.
+Output format must be a single JSON object that conforms to the `GeneratedIdeas` model, with the list of ideas nested under the `ideas` key.
 """,
-    output_type=PostIdeas,
-    model="gpt-4.1-mini", # Explicitly set model
-    model_settings={"temperature": 0.8}
+    output_type=GeneratedIdeas,
+    model="gpt-4.1-mini"
 )

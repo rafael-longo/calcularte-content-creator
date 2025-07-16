@@ -1,10 +1,11 @@
 from typing import List, Dict, Any
 from datetime import date
 from agents import Runner
+from pydantic import TypeAdapter
 from src.agents_crew.brand_strategist import BrandStrategistAgent, ContentPlan, BrandVoiceReport, PlannedPost
-from src.agents_crew.creative_director import creative_director_agent, PostIdea, PostIdeas
+from src.agents_crew.creative_director import creative_director_agent, PostIdea, GeneratedIdeas
 from src.agents_crew.copywriter import copywriter_agent
-from src.agents_crew.art_director import art_director_agent, ImagePrompt
+from src.agents_crew.art_director import art_director_agent, ImagePrompt, GeneratedImagePrompts
 from src.agents_crew.reviewer import reviewer_agent
 
 class OrchestratorAgent:
@@ -190,6 +191,11 @@ class OrchestratorAgent:
 
         # Construct the input for the agent
         user_input = f"""
+        Pydantic Schema for the output:
+        ```json
+        {GeneratedIdeas.model_json_schema()}
+        ```
+
         Content Pillar: '{content_pillar}'
         Number of Ideas: {num_ideas}
 
@@ -200,10 +206,10 @@ class OrchestratorAgent:
         # Run the agent using the Agents SDK Runner
         try:
             result = Runner.run_sync(self.creative_director, user_input)
-            post_ideas_obj = result.final_output
-            if post_ideas_obj and isinstance(post_ideas_obj, PostIdeas):
+            ideas_obj = result.final_output
+            if ideas_obj and isinstance(ideas_obj, GeneratedIdeas):
                 print("Orchestrator: Ideas generated.")
-                return post_ideas_obj.ideas
+                return ideas_obj.ideas
             else:
                 print("Orchestrator: No ideas generated or incorrect format received.")
                 return []
@@ -255,7 +261,13 @@ class OrchestratorAgent:
 
         # Step 3: Generate image prompts using ArtDirectorAgent
         print("Orchestrator: Generating image prompts...")
+        
         art_director_input = f"""
+        Pydantic Schema for the output:
+        ```json
+        {GeneratedImagePrompts.model_json_schema()}
+        ```
+
         Post Concept: "{idea.title}"
         Caption: "{caption}"
         Number of Prompts: {num_image_prompts}
@@ -265,7 +277,8 @@ class OrchestratorAgent:
         """
         try:
             result = Runner.run_sync(self.art_director, art_director_input)
-            image_prompts = result.final_output
+            prompts_obj = result.final_output
+            image_prompts = prompts_obj.prompts if prompts_obj else []
             print("Orchestrator: Image prompts generated.")
         except Exception as e:
             print(f"Orchestrator: Error running ArtDirectorAgent: {e}")

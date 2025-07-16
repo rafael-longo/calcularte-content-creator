@@ -27,6 +27,5 @@ Call to Action (CTA) - Standard Format:
 The user will provide the idea title, the idea defense, and the brand context.
 """,
     output_type=str,
-    model="gpt-4.1-mini", # Explicitly set model
-    model_settings={"temperature": 0.7, "max_output_tokens": 500}
+    model="gpt-4.1-mini"
 )

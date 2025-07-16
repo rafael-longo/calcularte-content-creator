@@ -5,6 +5,9 @@ from agents import Agent
 class ImagePrompt(BaseModel):
     prompt: str = Field(description="A single paragraph of text in English, detailing the image generation prompt.")
 
+class GeneratedImagePrompts(BaseModel):
+    prompts: List[ImagePrompt]
+
 # This is now a configured agent instance, not a class.
 art_director_agent = Agent(
     name="Art Director Agent",
@@ -24,9 +27,8 @@ Key Responsibilities:
 
 The user will provide the post concept, the caption, the number of prompts to generate, and the brand context.
 
-Output format must be a JSON array of ImagePrompt objects.
+Output format must be a single JSON object that conforms to the `GeneratedImagePrompts` model, with the list of prompts nested under the `prompts` key.
 """,
-    output_type=List[ImagePrompt],
-    model="gpt-4.1-mini", # Explicitly set model
-    model_settings={"temperature": 0.8}
+    output_type=GeneratedImagePrompts,
+    model="gpt-4.1-mini"
 )
