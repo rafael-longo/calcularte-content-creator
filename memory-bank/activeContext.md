@@ -37,8 +37,8 @@ The current focus has been on the successful implementation of the core backend 
 
 With the first nine enhancements complete, the project will now proceed to the final item on the core enhancement roadmap.
 
-1.  **Implement Enhancement #10: Interactive CLI Refinement Loop:** Make the refinement process conversational.
-    *   `docs/enhancement_plan_10_interactive_refinement.md`
+1.  **Implement Enhancement #11: Chain-of-Thought Logging via Streaming:** Make agents' internal reasoning transparent and observable.
+    *   `docs/enhancement_plan_11_stream_chain_of_thought_logging.md`
 2.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
 
 ## 4. Key Decisions and Considerations

@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 from agents import Agent
+
+load_dotenv()
 
 # This is now a configured agent instance, not a class.
 reviewer_agent = Agent(
@@ -17,5 +21,5 @@ Key Responsibilities:
 The user will provide a single input string containing all necessary context: the original content, the user feedback, and the relevant brand voice context. Parse this input to extract the required information and perform the revision.
 """,
     output_type=str,
-    model="gpt-4.1-mini"
+    model=os.getenv("OPENAI_MODEL")
 )

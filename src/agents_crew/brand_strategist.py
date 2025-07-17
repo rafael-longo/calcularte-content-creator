@@ -75,7 +75,7 @@ Instructions for Analysis:
 - If `time_frame` is 'month', the plan MUST cover themes for the entire month.
 """,
     output_type=ContentPlan,
-    model="gpt-4.1-mini"
+    model=os.getenv("OPENAI_MODEL")
 )
 
 brand_reporter_agent = Agent(
@@ -101,7 +101,7 @@ Instructions for Analysis:
 - Ensure all fields in the model are populated with insightful analysis.
 """,
     output_type=BrandVoiceReport,
-    model="gpt-4.1-mini"
+    model=os.getenv("OPENAI_MODEL")
 )
 
 
@@ -119,7 +119,7 @@ class BrandStrategistAgent:
             log.warning(f"Collection '{self.collection_name}' not found. Please run data ingestion first. Error: {e}")
             self.collection = None
 
-    def get_embedding(self, text: str, model: str = "text-embedding-3-small"):
+    def get_embedding(self, text: str, model: str = os.getenv("OPENAI_EMBEDDING_MODEL")):
         """Generates an embedding for the given text."""
         text = text.replace("\n", " ")
         response = self.client.embeddings.create(input=[text], model=model)
@@ -235,8 +235,8 @@ class BrandStrategistAgent:
 
         log.info("Getting default samples for brand voice report...")
         try:
-            log.debug("Retrieving up to 100 sample posts from ChromaDB.")
-            default_samples = self.collection.get(limit=100, include=['documents', 'metadatas'])
+            log.debug(f"Retrieving up to {os.getenv('N_SAMPLE_POSTS')} sample posts from ChromaDB.")
+            default_samples = self.collection.get(limit=int(os.getenv("N_SAMPLE_POSTS")), include=['documents', 'metadatas'])
             if not default_samples or not default_samples.get('documents'):
                 log.error("No documents found in the collection to generate a report.")
                 raise ValueError("No documents found in the collection.")
@@ -280,11 +280,11 @@ class BrandStrategistAgent:
         """
         
         response = self.client.responses.create(
-            model="gpt-4.1-mini",
+            model=os.getenv("OPENAI_MODEL"),
             instructions=instructions,
             input=user_input,
             temperature=1.1, # Higher temperature for more creativity
-            max_output_tokens=100,
+            max_output_tokens=5000,
         )
         
         wildcard_angle = response.output_text.strip()

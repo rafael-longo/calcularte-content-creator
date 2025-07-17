@@ -1,6 +1,10 @@
+import os
+from dotenv import load_dotenv
 from typing import List
 from pydantic import BaseModel, Field
 from agents import Agent
+
+load_dotenv()
 
 class PostIdea(BaseModel):
     title: str = Field(description="A catchy, engaging title for the idea.")
@@ -40,5 +44,5 @@ creative_director_agent = Agent(
     Output format must be a single JSON object that conforms to the `GeneratedIdeas` model, with the list of ideas nested under the `ideas` key.
     """,
     output_type=GeneratedIdeas,
-    model="gpt-4.1-mini"
+    model=os.getenv("OPENAI_MODEL")
 )

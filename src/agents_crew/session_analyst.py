@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 from agents import Agent
+
+load_dotenv()
 
 session_analyst_agent = Agent(
     name="Session History Analyst Agent",
@@ -21,5 +25,5 @@ Your task is to carefully read the session context conversation history and find
 Provide the answer as a clear, concise string.
 """,
     output_type=str,
-    model="gpt-4.1-mini",
+    model=os.getenv("OPENAI_MODEL"),
 )

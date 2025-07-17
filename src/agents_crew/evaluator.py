@@ -1,6 +1,10 @@
+import os
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import Literal
 from agents import Agent
+
+load_dotenv()
 
 class EvaluationResult(BaseModel):
     score: Literal["approved", "needs_improvement"] = Field(
@@ -30,5 +34,5 @@ Your evaluation must be rigorous. Follow these rules:
 4.  **Output format:** Your response must be a single JSON object that conforms to the `EvaluationResult` model.
 """,
     output_type=EvaluationResult,
-    model="gpt-4.1-mini",
+    model=os.getenv("OPENAI_MODEL"),
 )

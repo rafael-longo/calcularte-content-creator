@@ -1,6 +1,10 @@
+import os
 from typing import List
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from agents import Agent
+
+load_dotenv()
 
 class ImagePrompt(BaseModel):
     prompt: str = Field(description="A single paragraph of text in English, detailing the image generation prompt.")
@@ -41,5 +45,5 @@ If you receive a `Feedback for revision` in the input, it means your previous se
 Output format must be a single JSON object that conforms to the `GeneratedImagePrompts` model, with the list of prompts nested under the `prompts` key.
 """,
     output_type=GeneratedImagePrompts,
-    model="gpt-4.1-mini"
+    model=os.getenv("OPENAI_MODEL")
 )

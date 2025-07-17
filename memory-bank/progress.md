@@ -38,7 +38,7 @@
 The next phase of development will focus on implementing the final strategic enhancement on the core roadmap.
 
 **Enhancement Roadmap:**
-10. **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
+11. **Implement Chain-of-Thought Logging via Streaming:** Make agents' internal reasoning transparent and observable.
 
 After this enhancement is implemented, the project will proceed to the development of the web interface (FastAPI backend and React frontend).
 

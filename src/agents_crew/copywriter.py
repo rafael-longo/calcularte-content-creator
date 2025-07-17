@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 from agents import Agent
+
+load_dotenv()
 
 # This is now a configured agent instance, not a class.
 copywriter_agent = Agent(
@@ -30,5 +34,5 @@ The user will provide the idea title, the idea defense, and the brand context.
 If you receive a `Feedback for revision` in the input, it means your previous caption was reviewed and needs changes. Carefully analyze the feedback and rewrite the caption to address the specific points raised. The goal is to improve the caption based on the feedback provided.
 """,
     output_type=str,
-    model="gpt-4.1-mini"
+    model=os.getenv("OPENAI_MODEL")
 )
