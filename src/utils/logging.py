@@ -10,10 +10,13 @@ from agents.tracing.create import (
     HandoffSpanData,
 )
 
-# Configure Loguru logger
-logger.remove()  # Remove default handler
+# Remove existing logger configuration
+logger.remove()
+
+# Configure file logger for detailed, structured logs
+log_file_path = os.getenv("LOG_FILE", "app_run.log")
 logger.add(
-    sys.stderr,
+    log_file_path,
     level=os.getenv("LOG_LEVEL", "INFO").upper(),
     format=(
         "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
@@ -21,18 +24,34 @@ logger.add(
         "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
         "<level>{message}</level>"
     ),
-    colorize=True,
+    colorize=False,  # No colors in file
     backtrace=True,
     diagnose=True,
 )
 
-# Custom colors for different log levels
+# Configure console logger for clean, real-time output
+# This handler will only show the message itself for the "THOUGHT" level
+# Add a custom level for agent thoughts
+logger.level("THOUGHT", no=25, color="<magenta>")
+
+logger.add(
+    sys.stderr,
+    level="INFO",
+    format="<level>{message}</level>",
+    colorize=True,
+    filter=lambda record: record["level"].name != "THOUGHT"
+)
+# The THOUGHT level is now handled manually in main.py with typer.secho
+# We still define the level here so the file logger recognizes it.
+
+# Keep custom colors for other log levels
 logger.level("INFO", color="<white>")
 logger.level("DEBUG", color="<blue>")
 logger.level("SUCCESS", color="<green>")
 logger.level("WARNING", color="<yellow>")
 logger.level("ERROR", color="<red>")
 logger.level("CRITICAL", color="<red><bold>")
+
 
 class CustomLoguruProcessor(TracingProcessor):
     def on_span_start(self, span: Span):

@@ -221,14 +221,6 @@ def ingest(
     typer.echo("Data ingestion process finished.")
 
 
-
-
-
-
-
-
-
-
 @app.command("maestro")
 def maestro_command(
     prompt: str = typer.Argument(..., help="The high-level prompt for the Maestro Agent.")
@@ -241,20 +233,34 @@ def maestro_command(
     log.info(f"Using active session: '{session.session_id}' for Maestro command.")
     typer.echo(f"Maestro is thinking... (using session: {session.session_id})")
 
-    # The runner is async, so we use asyncio.run
-    result = asyncio.run(Runner.run(maestro_agent, prompt, session=session, max_turns=10))
-    
-    final_output = result.final_output
-    
+    async def stream_maestro():
+        final_output = None
+        # Use run_streamed() which returns a result object, then iterate over stream_events()
+        result = Runner.run_streamed(maestro_agent, prompt, session=session, max_turns=10)
+        async for event in result.stream_events():
+            if event.type == "raw_response_event" and hasattr(event.data, 'delta') and event.data.delta:
+                # Use typer.secho for direct, unformatted console output
+                typer.secho(event.data.delta, nl=False, fg="magenta")
+                # Log the same data to the file, escaping braces for safety
+                log.log("THOUGHT", event.data.delta.replace("{", "{{").replace("}", "}}"))
+            elif event.type == "run_item_stream_event" and hasattr(event.item, 'type') and event.item.type == "tool_call_item":
+                # A tool has been called. Print a newline to the console.
+                typer.echo()
+                # Access the tool call info from the raw_item attribute
+                log.info(f"Tool Call: {event.item.raw_item.name} with args: {event.item.raw_item.arguments}")
+
+        return result.final_output
+
+    final_output = asyncio.run(stream_maestro())
+      
     if final_output:
         log.success("Maestro command finished successfully.")
-        # TODO: We could add more structured output parsing here later
-        typer.echo("\n--- Maestro's Response ---")
-        typer.echo(final_output)
-        typer.echo("--------------------------")
+        typer.echo("\n\n--- Maestro's Final Response ---")
+        typer.echo(str(final_output))
+        typer.echo("--------------------------------")
     else:
         log.error("Maestro command finished with no output.")
-        typer.echo("Maestro command finished with no output.")
+        typer.echo("\nMaestro command finished with no output.")
 
 
 if __name__ == "__main__":
