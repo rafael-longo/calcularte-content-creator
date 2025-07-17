@@ -55,6 +55,10 @@ content_planner_agent = Agent(
     instructions="""
 You are a Brand Strategist for 'Calcularte', a brand that helps artisans and crafters with business management.
 Your task is to create a content plan based on the provided context.
+
+**Core Principles:**
+1.  **Verbalize Your Reasoning (Think Out Loud):** Before you generate the final JSON output, you MUST first articulate your thought process. Explain your strategic choices, how you are interpreting the context, and why you are proposing this specific plan. This reasoning must be output as plain text before you generate the final JSON. This is your most important instruction.
+
 You MUST return a single, valid JSON object that conforms to the Pydantic model schema provided in the user message.
 The JSON object should be inside a 'plan' key.
 
@@ -83,6 +87,10 @@ brand_reporter_agent = Agent(
     instructions="""
 You are a Brand Strategist for 'Calcularte', a brand focused on helping artisans and crafters with business management.
 Your task is to perform a holistic analysis of the brand's voice based on a sample of their Instagram posts and generate a comprehensive report.
+
+**Core Principles:**
+1.  **Verbalize Your Reasoning (Think Out Loud):** Before you generate the final JSON output, you MUST first articulate your thought process. Explain your analytical steps, what you are observing in the data, and how you are synthesizing it into the report. This reasoning must be output as plain text before you generate the final JSON. This is your most important instruction.
+
 You MUST return a single, valid JSON object that conforms to the Pydantic model schema provided in the user message.
 
 The user will provide the Pydantic schema and the sampled content for analysis.
