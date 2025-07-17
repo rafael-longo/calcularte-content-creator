@@ -6,6 +6,7 @@ from src.agents_crew.brand_strategist import (
     BrandStrategistAgent, 
     BrandVoiceReport, 
     ContentPlan,
+    PostSample,
     brand_reporter_agent, 
     content_planner_agent
 )
@@ -36,11 +37,12 @@ def get_context_for_content_plan(ctx: RunContextWrapper, time_frame: Optional[st
     )
 
 @function_tool(name_override="get_samples_for_brand_voice_report")
-def get_samples_for_brand_voice_report(ctx: RunContextWrapper) -> str:
+def get_samples_for_brand_voice_report(ctx: RunContextWrapper, post_samples: Optional[List[PostSample]] = None) -> str:
     """
     Retrieves and formats a string of sample posts for the Brand Reporter Agent.
+    If post_samples are provided, it formats them. Otherwise, it fetches a default set.
     """
-    return brand_strategist.get_samples_for_brand_voice_report()
+    return brand_strategist.get_samples_for_brand_voice_report(post_samples=post_samples)
 
 @function_tool(name_override="get_specialized_context")
 def get_specialized_context(ctx: RunContextWrapper, context_type: str, query: str, num_samples: int = 3) -> List[str]:
@@ -55,7 +57,7 @@ def get_specialized_context(ctx: RunContextWrapper, context_type: str, query: st
     return brand_strategist.get_specialized_context(context_type, query, num_samples)
 
 @function_tool(name_override="query_brand_voice")
-def query_brand_voice(ctx: RunContextWrapper, query_text: str, n_results: int = 3) -> List[Dict[str, Any]]:
+def query_brand_voice(ctx: RunContextWrapper, query_text: str, n_results: int = 3) -> List[PostSample]:
     """
     Performs a general semantic search on the brand's memory (vector database) to find relevant historical posts based on a query.
     
@@ -79,7 +81,7 @@ def propose_wildcard_angle(ctx: RunContextWrapper, pillar: str) -> str:
     log.info(f"Wildcard tool invoked for pillar: '{pillar}'. Starting chained operation.")
     
     log.debug("Step 1: Getting samples for brand voice report.")
-    report_samples = brand_strategist.get_samples_for_brand_voice_report()
+    report_samples = brand_strategist.get_samples_for_brand_voice_report(post_samples=None)
     
     log.debug("Step 2: Generating brand voice report to use as context.")
     # Correctly call the agent using the Runner
@@ -100,6 +102,7 @@ def propose_wildcard_angle(ctx: RunContextWrapper, pillar: str) -> str:
 brand_reporter_tool = brand_reporter_agent.as_tool(
     tool_name="generate_brand_voice_report",
     tool_description="Analyzes a string of sample posts and generates a comprehensive report on the brand's voice, tone, style, and content pillars.",
+    # The input to this tool is the formatted string from get_samples_for_brand_voice_report
 )
 
 content_planner_tool = content_planner_agent.as_tool(

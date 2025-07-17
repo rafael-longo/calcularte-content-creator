@@ -4,7 +4,7 @@ from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from datetime import date
 from agents import Agent, Runner, Session
 from src.utils.logging import log
@@ -35,6 +35,18 @@ class BrandVoiceReport(BaseModel):
     language_style_details: str  # Includes emoji and colloquialism usage
     country_culture_details: str
     hashtag_strategy_summary: str
+
+class PostMetadata(BaseModel):
+    caption: str
+    hashtags: str
+    timestamp: str
+    likesCount: int
+    commentsCount: int
+    url: str
+
+class PostSample(BaseModel):
+    caption: str
+    metadata: PostMetadata
 
 # --- Agent Definitions ---
 
@@ -113,7 +125,7 @@ class BrandStrategistAgent:
         response = self.client.embeddings.create(input=[text], model=model)
         return response.data[0].embedding
 
-    def query_brand_voice(self, query_text: str, n_results: int = 3):
+    def query_brand_voice(self, query_text: str, n_results: int = 3) -> List[PostSample]:
         """
         Queries the ChromaDB for content semantically similar to the query text.
         Returns the most relevant captions and their metadata.
@@ -203,28 +215,38 @@ class BrandStrategistAgent:
         log.debug(f"Generated the following context for ContentPlannerAgent:\n{full_context}")
         return full_context
 
-    def get_samples_for_brand_voice_report(self) -> str:
+    def get_samples_for_brand_voice_report(self, post_samples: Optional[List[PostSample]] = None) -> str:
         """
         Retrieves and formats a string of sample posts for the Brand Reporter Agent.
+        If post_samples are provided, it formats them. Otherwise, it fetches a default set.
         """
+        if post_samples:
+            log.info(f"Formatting {len(post_samples)} provided post samples for brand voice report.")
+            # We already have the samples, just need to format them
+            sampled_content_str = "\n".join(
+                [f"- Caption: {sample.caption}\n  Metadata: {sample.metadata.model_dump_json()}" for sample in post_samples]
+            )
+            return sampled_content_str
+
+        # If no samples are provided, fall back to the original behavior
         if not self.collection:
             log.error("Brand voice collection not initialized. Cannot generate report.")
             return "Brand voice collection not initialized. Please ingest data."
 
-        log.info("Getting samples for brand voice report...")
+        log.info("Getting default samples for brand voice report...")
         try:
             log.debug("Retrieving up to 100 sample posts from ChromaDB.")
-            sample_posts = self.collection.get(limit=100, include=['documents', 'metadatas'])
-            if not sample_posts or not sample_posts.get('documents'):
+            default_samples = self.collection.get(limit=100, include=['documents', 'metadatas'])
+            if not default_samples or not default_samples.get('documents'):
                 log.error("No documents found in the collection to generate a report.")
                 raise ValueError("No documents found in the collection.")
-            log.debug(f"Retrieved {len(sample_posts['documents'])} posts for analysis.")
+            log.debug(f"Retrieved {len(default_samples['documents'])} posts for analysis.")
         except Exception as e:
             log.error(f"Error retrieving data for brand voice report: {e}")
             return f"Error retrieving data: {e}"
 
         sampled_content_str = "\n".join(
-            [f"- Caption: {doc}\n  Metadata: {meta}" for doc, meta in zip(sample_posts['documents'], sample_posts['metadatas'])]
+            [f"- Caption: {doc}\n  Metadata: {meta}" for doc, meta in zip(default_samples['documents'], default_samples['metadatas'])]
         )
         return sampled_content_str
 
