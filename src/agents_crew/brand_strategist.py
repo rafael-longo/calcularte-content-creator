@@ -162,16 +162,16 @@ class BrandStrategistAgent:
         log.debug(f"Found {len(captions)} specialized context examples.")
         return captions
 
-    def propose_content_plan(self, time_frame: Optional[str], current_date: date, recent_post_themes: Optional[list] = None, num_posts: Optional[int] = None, session: Optional[Session] = None) -> ContentPlan:
+    def get_context_for_content_plan(self, time_frame: Optional[str] = None, num_posts: Optional[int] = None, recent_post_themes: Optional[list] = None) -> str:
         """
-        Generates a strategic content plan by coordinating with the content_planner_agent.
-        Can be driven by a time_frame or a specific number of posts.
+        Gathers and formats all necessary context for the Content Planner Agent.
         """
         if not self.collection:
-            log.error("Brand voice collection not initialized. Cannot propose content plan.")
-            return ContentPlan(plan=[])
+            log.error("Brand voice collection not initialized. Cannot get context for plan.")
+            return "Brand voice collection not initialized. Please ingest data."
 
-        log.info(f"Proposing content plan for time_frame='{time_frame}' or num_posts='{num_posts}'.")
+        log.info(f"Getting context for content plan for time_frame='{time_frame}' or num_posts='{num_posts}'.")
+        current_date = date.today()
         seasonal_context = f"Today's date is {current_date.strftime('%Y-%m-%d')}."
         variety_context = f"Avoid these recent themes: {', '.join(recent_post_themes or [])}."
         
@@ -190,43 +190,28 @@ class BrandStrategistAgent:
         else:
             request_params = f"Time Frame: {time_frame}\nCurrent Date: {current_date.strftime('%Y-%m-%d')}"
 
-        user_input = f"""
-        Pydantic Schema:
-        ```json
-        {ContentPlan.model_json_schema()}
-        ```
-
+        # This is now a simple string, not a complex prompt with a schema
+        full_context = f"""
         Context:
         - {seasonal_context}
         - {variety_context}
         - {pillar_context}
 
+        Request:
         {request_params}
         """
-        log.debug(f"Passing the following context to ContentPlannerAgent:\n{user_input}")
+        log.debug(f"Generated the following context for ContentPlannerAgent:\n{full_context}")
+        return full_context
 
-        try:
-            # In a sync context, we must manually handle the event loop for the async runner
-            result = asyncio.run(Runner.run(content_planner_agent, user_input, session=session))
-            plan = result.final_output
-            if plan and plan.plan:
-                log.success(f"Content plan generated with {len(plan.plan)} posts.")
-            else:
-                log.warning("ContentPlannerAgent returned an empty or invalid plan.")
-            return plan if plan else ContentPlan(plan=[])
-        except Exception as e:
-            log.error(f"Error running content_planner_agent: {e}")
-            return ContentPlan(plan=[])
-
-    def generate_brand_voice_report(self, session: Optional[Session] = None) -> BrandVoiceReport:
+    def get_samples_for_brand_voice_report(self) -> str:
         """
-        Analyzes the brand's voice and generates a report using the brand_reporter_agent.
+        Retrieves and formats a string of sample posts for the Brand Reporter Agent.
         """
         if not self.collection:
             log.error("Brand voice collection not initialized. Cannot generate report.")
-            return BrandVoiceReport(executive_summary="Brand voice collection not initialized.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
+            return "Brand voice collection not initialized. Please ingest data."
 
-        log.info("Generating brand voice report...")
+        log.info("Getting samples for brand voice report...")
         try:
             log.debug("Retrieving up to 100 sample posts from ChromaDB.")
             sample_posts = self.collection.get(limit=100, include=['documents', 'metadatas'])
@@ -236,35 +221,12 @@ class BrandStrategistAgent:
             log.debug(f"Retrieved {len(sample_posts['documents'])} posts for analysis.")
         except Exception as e:
             log.error(f"Error retrieving data for brand voice report: {e}")
-            return BrandVoiceReport(executive_summary=f"Error retrieving data: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
+            return f"Error retrieving data: {e}"
 
         sampled_content_str = "\n".join(
             [f"- Caption: {doc}\n  Metadata: {meta}" for doc, meta in zip(sample_posts['documents'], sample_posts['metadatas'])]
         )
-
-        user_input = f"""
-        Pydantic Schema:
-        ```json
-        {BrandVoiceReport.model_json_schema()}
-        ```
-
-        Sampled Content for Analysis:
-        {sampled_content_str}
-        """
-        log.debug(f"Passing the following context to BrandReporterAgent:\n{user_input}")
-
-        try:
-            # In a sync context, we must manually handle the event loop for the async runner
-            result = asyncio.run(Runner.run(brand_reporter_agent, user_input, session=session))
-            report = result.final_output
-            if report and report.executive_summary:
-                log.success("Brand voice report generated successfully.")
-            else:
-                log.warning("BrandReporterAgent returned an empty or invalid report.")
-            return report if report else BrandVoiceReport(executive_summary="Failed to generate report.", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
-        except Exception as e:
-            log.error(f"Error running brand_reporter_agent: {e}")
-            return BrandVoiceReport(executive_summary=f"Error generating report: {e}", key_content_pillars=[], audience_persona_summary="", tone_of_voice_analysis="", language_style_details="", country_culture_details="", hashtag_strategy_summary="")
+        return sampled_content_str
 
 
 if __name__ == "__main__":

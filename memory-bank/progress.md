@@ -32,6 +32,7 @@
     *   `generate-ideas`
     *   `develop-post`
     *   `refine-content`
+    *   `maestro` (New)
 *   **Flexible and Autonomous Post Generation:** The system can now autonomously plan and develop content from start to finish using the `plan` and `plan-and-develop` commands. The `OrchestratorAgent` and `CreativeDirectorAgent` have been enhanced to support this workflow.
 *   **Strategic Content Planning:** The `BrandStrategistAgent` can now generate proactive, strategic content plans based on seasonality and historical data, accessible via the `plan-content` CLI command.
 *   **On-Demand Brand Voice Reporting:** The system can generate a comprehensive, human-readable report on the brand's voice, tone, and style via the `report brand-voice` CLI command.
@@ -41,20 +42,21 @@
 *   **Persistent Session Memory:** The CLI is now stateful. It uses the `SQLiteSession` from the OpenAI Agents SDK to remember conversation history across multiple commands. New `session` commands (`start`, `status`, `end`, `clear`) have been added to manage this feature.
 *   **Robust Session Management:** The CLI is now significantly more robust and user-friendly. Sessions are persistent in a `sessions.db` file, start automatically, and are protected by a token limit safeguard to prevent excessive API costs. A new `session inspect` command allows for easy debugging.
 *   **System-Wide Stability (`asyncio` fix):** A critical bug related to the `asyncio` event loop was identified and fixed across all agent-calling modules (`BrandStrategistAgent`, `OrchestratorAgent`), ensuring stable operation within the synchronous CLI environment.
+*   **Autonomous Maestro Agent (Enhancement #8):** A new `MaestroAgent` provides a single, conversational entry point to the system's capabilities. It uses an "Agents as Tools" architecture, orchestrating specialist agents (`CreativeDirector`, `Copywriter`, etc.) and `FunctionTools` to fulfill high-level user prompts via the new `maestro` CLI command.
 
 ## 2. What's Left to Build
 
 The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
 
 **Enhancement Roadmap:**
-8.  **Implement the Autonomous Maestro Agent:** Create a single, powerful, conversational entry point to the system (maestro command) managed by an autonomous MaestroAgent. This agent will interpret high-level user prompts and orchestrate the system's full capabilities by using specialist agents and functions as tools.
-9.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
+9.  **Improve agents instructions:**.
+10.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
 
 After these enhancements are implemented, the project will proceed to the development of the web interface (FastAPI backend and React frontend).
 
 ## 3. Current Status
 
-The project has successfully completed the first seven enhancements from the roadmap, including the critical "Robust Session Management" feature. The system is now significantly more stable, observable, and user-friendly, with key safeguards and debugging tools in place. The foundation for advanced conversational features is now solid.
+The project has successfully completed the first eight enhancements from the roadmap. The implementation of the `MaestroAgent` marks a significant architectural milestone, shifting the primary interaction model to a more flexible and powerful conversational paradigm. The system is now ready for the final core enhancement before moving to web UI development.
 
 ## 4. Known Issues
 

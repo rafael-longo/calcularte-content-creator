@@ -1,13 +1,15 @@
 import typer
 import os
 import json
+import asyncio
 from dotenv import load_dotenv
 from typing import Optional
 from agents.tracing import add_trace_processor
-from agents import SQLiteSession
+from agents import SQLiteSession, Runner
 from scripts.ingest_data import ingest_data
 from src.agents_crew.brand_strategist import BrandStrategistAgent
 from src.agents_crew.orchestrator import OrchestratorAgent, PostIdea
+from src.agents_crew.maestro import maestro_agent
 from src.utils.logging import CustomLoguruProcessor, log
 from src.utils.token_counter import get_session_token_count
 from datetime import datetime
@@ -476,6 +478,34 @@ def refine_content_command(
     else:
         log.error(f"Failed to refine {component_type}.")
         typer.echo(f"Failed to refine {component_type}.")
+
+@app.command("maestro")
+def maestro_command(
+    prompt: str = typer.Argument(..., help="The high-level prompt for the Maestro Agent.")
+):
+    """
+    Interacts with the Maestro Agent for autonomous, conversational content creation.
+    """
+    check_openai_api_key()
+    session = _get_active_session()
+    log.info(f"Using active session: '{session.session_id}' for Maestro command.")
+    typer.echo(f"Maestro is thinking... (using session: {session.session_id})")
+
+    # The runner is async, so we use asyncio.run
+    result = asyncio.run(Runner.run(maestro_agent, prompt, session=session, max_turns=5))
+    
+    final_output = result.final_output
+    
+    if final_output:
+        log.success("Maestro command finished successfully.")
+        # TODO: We could add more structured output parsing here later
+        typer.echo("\n--- Maestro's Response ---")
+        typer.echo(final_output)
+        typer.echo("--------------------------")
+    else:
+        log.error("Maestro command finished with no output.")
+        typer.echo("Maestro command finished with no output.")
+
 
 if __name__ == "__main__":
     app()

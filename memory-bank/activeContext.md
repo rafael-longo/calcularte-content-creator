@@ -35,19 +35,26 @@ The current focus has been on the successful implementation of the core backend 
     *   **`session inspect` Command:** A new CLI command was added to allow human-readable inspection of the active session's content for easier debugging.
 *   **Critical Bug Fix (`asyncio` Event Loop):**
     *   **Agent Calls Hardened:** All calls to `Runner.run_sync` across the system (in `BrandStrategistAgent` and `OrchestratorAgent`) were replaced with `asyncio.run(Runner.run(...))`. This resolves a critical bug where agent calls would fail in the synchronous Typer CLI environment.
+*   **Autonomous Maestro Agent Implemented (Enhancement #8):**
+    *   **`MaestroAgent` Created:** A new, high-level orchestrator (`src/agents_crew/maestro.py`) was created to serve as the primary conversational entry point to the system.
+    *   **"Agents as Tools" Architecture:** The project fully adopted the "Agents as Tools" pattern. A new `src/agents_crew/tools.py` file was created to define a comprehensive toolset for the Maestro.
+    *   **FunctionTools:** Key methods from the `BrandStrategistAgent` were exposed as `FunctionTool`s.
+    *   **AgentTools:** All specialist agents (`CreativeDirector`, `Copywriter`, `ArtDirector`, `Reviewer`, and the new `SessionHistoryAnalystAgent`) were wrapped using `.as_tool()`.
+    *   **New `maestro` Command:** A new `maestro` command was added to `src/main.py`, allowing users to interact with the system via high-level, natural language prompts.
 
 ## 3. Next Steps
 
-With the first seven enhancements complete, the project will now proceed to the remaining items on the core enhancement roadmap.
+With the first eight enhancements complete, the project will now proceed to the remaining items on the core enhancement roadmap.
 
-1.  **Implement Enhancement #8: Autonomous Maestro Agent:** Create a single, powerful, conversational entry point to the system (maestro command) managed by an autonomous MaestroAgent. This agent will interpret high-level user prompts and orchestrate the system's full capabilities by using specialist agents and functions as tools.
-    *   `docs/enhancement_plan_8_autonomous_maestro_orchestrator.md`
-2.  **Implement Enhancement #9: Interactive CLI Refinement Loop:** Make the refinement process conversational.
-    *   `docs/enhancement_plan_9_interactive_refinement.md`
+1.  **Implement Enhancement #9: Better Agents Instructions:**
+    *   `docs/enhancement_plan_9_better_agents_instructions.md`
+2.  **Implement Enhancement #10: Interactive CLI Refinement Loop:** Make the refinement process conversational.
+    *   `docs/enhancement_plan_10_interactive_refinement.md`
 3.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
 
 ## 4. Key Decisions and Considerations
 
+*   **"Agents as Tools" as the Primary Orchestration Pattern:** The implementation of the `MaestroAgent` solidifies the "Agents as Tools" pattern as the primary strategy for autonomous orchestration. The Maestro agent reasons and calls specialist tools, rather than relying on hard-coded Python logic. This is a key architectural shift from the deterministic `OrchestratorAgent`.
 *   **Orchestration via Code Confirmed:** The decision to use code-based orchestration for the `OrchestratorAgent` has proven effective for maintaining predictability and control over the complex multi-agent workflow.
 *   **Structured Outputs:** Leveraging Pydantic models for structured outputs from agents (e.g., `PostIdea`, `ImagePrompt`) simplifies data handling and ensures consistency.
 *   **Modular Agent Design:** The clear separation of concerns among agents facilitates development, testing, and future modifications.
