@@ -43,20 +43,20 @@
 *   **Robust Session Management:** The CLI is now significantly more robust and user-friendly. Sessions are persistent in a `sessions.db` file, start automatically, and are protected by a token limit safeguard to prevent excessive API costs. A new `session inspect` command allows for easy debugging.
 *   **System-Wide Stability (`asyncio` fix):** A critical bug related to the `asyncio` event loop was identified and fixed across all agent-calling modules (`BrandStrategistAgent`, `OrchestratorAgent`), ensuring stable operation within the synchronous CLI environment.
 *   **Autonomous Maestro Agent (Enhancement #8):** A new `MaestroAgent` provides a single, conversational entry point to the system's capabilities. It uses an "Agents as Tools" architecture, orchestrating specialist agents (`CreativeDirector`, `Copywriter`, etc.) and `FunctionTools` to fulfill high-level user prompts via the new `maestro` CLI command.
+*   **Enhanced Agent Instructions and Creativity (Enhancement #9):** The system's creative and strategic capabilities have been significantly upgraded. The `MaestroAgent` is now more strategic, the `CreativeDirectorAgent` more varied, the `EvaluatorAgent` more brand-aligned, and the `ArtDirectorAgent` plans visual narratives. A new "Creative Wildcard" tool has been added to inject novel ideas into the workflow.
 
 ## 2. What's Left to Build
 
-The next phase of development will focus on implementing the remaining strategic enhancements, as outlined in the `docs/` directory.
+The next phase of development will focus on implementing the final strategic enhancement on the core roadmap.
 
 **Enhancement Roadmap:**
-9.  **Improve agents instructions:**.
-10.  **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
+10. **Create an Interactive CLI Refinement Loop:** Make the refinement process conversational.
 
-After these enhancements are implemented, the project will proceed to the development of the web interface (FastAPI backend and React frontend).
+After this enhancement is implemented, the project will proceed to the development of the web interface (FastAPI backend and React frontend).
 
 ## 3. Current Status
 
-The project has successfully completed the first eight enhancements from the roadmap. The implementation of the `MaestroAgent` marks a significant architectural milestone, shifting the primary interaction model to a more flexible and powerful conversational paradigm. The system is now ready for the final core enhancement before moving to web UI development.
+The project has successfully completed the first nine enhancements from the roadmap. The recent implementation of enhanced agent instructions and the "Creative Wildcard" system marks a major leap in the system's creative and strategic alignment. The system is now ready for the final core enhancement before moving to web UI development.
 
 ## 4. Known Issues
 

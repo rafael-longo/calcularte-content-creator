@@ -39,6 +39,16 @@ class CustomLoguruProcessor(TracingProcessor):
         pass
 
     def on_span_end(self, span: Span):
+        # Check for errors on the span first
+        if span.error:
+            span_name = getattr(span.span_data, 'name', type(span.span_data).__name__)
+            logger.log(
+                "ERROR",
+                f"ERROR in span '{span_name}' ({span.span_id}): {span.error}"
+            )
+            # Optionally, you can return here if you don't want to log the regular span info on error
+            return
+
         span_data = span.span_data
         log_message = ""
         log_level = "INFO"

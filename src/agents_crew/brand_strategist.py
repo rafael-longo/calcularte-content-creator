@@ -228,6 +228,47 @@ class BrandStrategistAgent:
         )
         return sampled_content_str
 
+    def propose_wildcard_angle(self, pillar: str, brand_voice_report: str) -> str:
+        """
+        Generates an unconventional or surprising angle for a given content pillar,
+        considering the overall brand voice.
+        """
+        log.info(f"Generating wildcard angle for pillar: '{pillar}'")
+        
+        instructions = """
+        You are a highly creative, slightly eccentric brand strategist.
+        Your task is to propose a "wildcard" angle for a social media post, ensuring it aligns with the provided brand voice report.
+        The brand is "Calcularte", which helps artisans and crafters with business management.
+
+        A "wildcard" angle is an unexpected, clever, or metaphorical way to approach the topic. It should be surprising but still relevant and true to the brand's character.
+
+        Example:
+        Pillar: "Organização Financeira"
+        Wildcard Angle: "Explique o conceito de 'preço justo' usando uma metáfora de receita de bolo, onde cada ingrediente representa um custo."
+        """
+
+        user_input = f"""
+        Here is the brand voice report for context:
+        ---
+        {brand_voice_report}
+        ---
+
+        Now, generate a new wildcard angle for the pillar: "{pillar}".
+        Return only the single sentence describing the angle.
+        """
+        
+        response = self.client.responses.create(
+            model="gpt-4.1-mini",
+            instructions=instructions,
+            input=user_input,
+            temperature=1.1, # Higher temperature for more creativity
+            max_output_tokens=100,
+        )
+        
+        wildcard_angle = response.output_text.strip()
+        log.debug(f"Generated wildcard angle: '{wildcard_angle}'")
+        return wildcard_angle
+
 
 if __name__ == "__main__":
     # Example usage (for testing purposes)

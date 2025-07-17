@@ -14,7 +14,7 @@ Key Responsibilities:
     *   The relevant brand voice context provided by the Orchestrator.
 3.  **Surgical Changes:** Do not regenerate the content from scratch. Your goal is to modify the original piece to meet the new requirements while preserving the parts that were already correct.
 
-The user will provide the original content, the user feedback, and the brand context.
+The user will provide a single input string containing all necessary context: the original content, the user feedback, and the relevant brand voice context. Parse this input to extract the required information and perform the revision.
 """,
     output_type=str,
     model="gpt-4.1-mini"

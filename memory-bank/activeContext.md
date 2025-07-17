@@ -41,16 +41,20 @@ The current focus has been on the successful implementation of the core backend 
     *   **FunctionTools:** Key methods from the `BrandStrategistAgent` were exposed as `FunctionTool`s.
     *   **AgentTools:** All specialist agents (`CreativeDirector`, `Copywriter`, `ArtDirector`, `Reviewer`, and the new `SessionHistoryAnalystAgent`) were wrapped using `.as_tool()`.
     *   **New `maestro` Command:** A new `maestro` command was added to `src/main.py`, allowing users to interact with the system via high-level, natural language prompts.
+*   **Enhanced Agent Instructions and Creativity Implemented (Enhancement #9):**
+    *   **`MaestroAgent` Enhanced:** Instructions were overhauled to embody the "Amiga Especialista" persona, promoting a more strategic, context-aware, and empathetic approach to orchestration.
+    *   **`CreativeDirectorAgent` Enhanced:** Instructions were updated with "Creative Mandates" to encourage diverse content formats and avoid clichés.
+    *   **`EvaluatorAgent` Enhanced:** Instructions were updated to include specific brand principles, making the quality control loop more aligned with Calcularte's core values.
+    *   **`ArtDirectorAgent` Enhanced:** The agent's workflow was transformed into a two-step process: creating a visual storyboard and then generating prompts, allowing for more dynamic and narrative-driven carousel planning.
+    *   **"Creative Wildcard" System Implemented:** A new `propose_wildcard_angle` tool was added to the `MaestroAgent`'s toolset, enabling the generation of unexpected and highly creative post angles to break out of creative ruts.
 
 ## 3. Next Steps
 
-With the first eight enhancements complete, the project will now proceed to the remaining items on the core enhancement roadmap.
+With the first nine enhancements complete, the project will now proceed to the final item on the core enhancement roadmap.
 
-1.  **Implement Enhancement #9: Better Agents Instructions:**
-    *   `docs/enhancement_plan_9_better_agents_instructions.md`
-2.  **Implement Enhancement #10: Interactive CLI Refinement Loop:** Make the refinement process conversational.
+1.  **Implement Enhancement #10: Interactive CLI Refinement Loop:** Make the refinement process conversational.
     *   `docs/enhancement_plan_10_interactive_refinement.md`
-3.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
+2.  **Future Phase: Web Interface:** Once the core system is enhanced, a new project will be initiated for the development of the FastAPI backend and the React frontend.
 
 ## 4. Key Decisions and Considerations
 

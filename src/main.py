@@ -186,7 +186,7 @@ def session_clear():
     if typer.confirm(f"Are you sure you want to permanently delete all history for session '{session_id}'?"):
         try:
             session_to_clear = SQLiteSession(session_id=session_id, db_path=SESSION_DB_FILE)
-            session_to_clear.clear()
+            asyncio.run(session_to_clear.clear_session())
             log.success(f"History for session '{session_id}' has been cleared.")
             typer.echo(f"History for session '{session_id}' has been cleared.")
         except Exception as e:
@@ -492,7 +492,7 @@ def maestro_command(
     typer.echo(f"Maestro is thinking... (using session: {session.session_id})")
 
     # The runner is async, so we use asyncio.run
-    result = asyncio.run(Runner.run(maestro_agent, prompt, session=session, max_turns=5))
+    result = asyncio.run(Runner.run(maestro_agent, prompt, session=session, max_turns=10))
     
     final_output = result.final_output
     

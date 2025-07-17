@@ -65,6 +65,35 @@ def query_brand_voice(ctx: RunContextWrapper, query_text: str, n_results: int = 
     """
     return brand_strategist.query_brand_voice(query_text, n_results)
 
+@function_tool(name_override="propose_wildcard_angle")
+def propose_wildcard_angle(ctx: RunContextWrapper, pillar: str) -> str:
+    """
+    Generates an unconventional, surprising, or metaphorical "wildcard" angle for a given content pillar to spark creativity.
+    This tool is great for breaking out of creative ruts.
+    
+    Args:
+        pillar: The content pillar to generate a wildcard angle for.
+    """
+    # The wildcard tool needs the full brand voice report for context.
+    # This is a chained operation: get report samples -> generate report -> generate wildcard.
+    log.info(f"Wildcard tool invoked for pillar: '{pillar}'. Starting chained operation.")
+    
+    log.debug("Step 1: Getting samples for brand voice report.")
+    report_samples = brand_strategist.get_samples_for_brand_voice_report()
+    
+    log.debug("Step 2: Generating brand voice report to use as context.")
+    # Correctly call the agent using the Runner
+    from agents import Runner
+    import asyncio
+    result = asyncio.run(Runner.run(brand_reporter_agent, report_samples))
+    report: BrandVoiceReport = result.final_output
+    
+    # Convert the Pydantic model to a string for the next step
+    report_str = report.model_dump_json(indent=2)
+
+    log.debug("Step 3: Calling propose_wildcard_angle with the generated report.")
+    return brand_strategist.propose_wildcard_angle(pillar=pillar, brand_voice_report=report_str)
+
 
 # --- Define Agent-as-Tool wrappers ---
 
@@ -111,6 +140,7 @@ maestro_tools = [
     get_samples_for_brand_voice_report,
     get_specialized_context,
     query_brand_voice,
+    propose_wildcard_angle,
     brand_reporter_tool,
     content_planner_tool,
     creative_director_tool,
