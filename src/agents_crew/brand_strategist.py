@@ -143,23 +143,41 @@ class BrandStrategistAgent:
             return "Brand voice collection not initialized. Please ingest data."
 
         log.debug(f"Querying brand voice with text: '{query_text}'")
-        query_embedding = self.get_embedding(query_text)
         
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results,
-            include=['documents', 'metadatas']
-        )
+        # If the query is a wildcard, we fetch all posts and sort by date.
+        if query_text == "*":
+            log.info("Wildcard query detected. Fetching all posts and sorting by newest first.")
+            all_posts = self.collection.get(include=['documents', 'metadatas'])
+            if not all_posts or not all_posts.get('documents'):
+                return []
 
-        relevant_content = []
-        if results and results['documents']:
-            for i in range(len(results['documents'][0])):
-                content = {
-                    "caption": results['documents'][0][i],
-                    "metadata": results['metadatas'][0][i]
-                }
-                relevant_content.append(content)
-        
+            combined_posts = [
+                {'caption': doc, 'metadata': meta}
+                for doc, meta in zip(all_posts['documents'], all_posts['metadatas'])
+            ]
+            sorted_posts = sorted(
+                combined_posts,
+                key=lambda p: p['metadata'].get('timestamp', '1970-01-01T00:00:00+0000'),
+                reverse=True
+            )
+            relevant_content = sorted_posts[:n_results]
+        else:
+            # For semantic search, use the original query method.
+            query_embedding = self.get_embedding(query_text)
+            results = self.collection.query(
+                query_embeddings=[query_embedding],
+                n_results=n_results,
+                include=['documents', 'metadatas']
+            )
+            relevant_content = []
+            if results and results['documents']:
+                for i in range(len(results['documents'][0])):
+                    content = {
+                        "caption": results['documents'][0][i],
+                        "metadata": results['metadatas'][0][i]
+                    }
+                    relevant_content.append(content)
+
         log.debug(f"Found {len(relevant_content)} relevant documents.")
         return relevant_content
 
@@ -241,20 +259,19 @@ class BrandStrategistAgent:
             log.error("Brand voice collection not initialized. Cannot generate report.")
             return "Brand voice collection not initialized. Please ingest data."
 
-        log.info("Getting default samples for brand voice report...")
-        try:
-            log.debug(f"Retrieving up to {os.getenv('N_SAMPLE_POSTS')} sample posts from ChromaDB.")
-            default_samples = self.collection.get(limit=int(os.getenv("N_SAMPLE_POSTS")), include=['documents', 'metadatas'])
-            if not default_samples or not default_samples.get('documents'):
-                log.error("No documents found in the collection to generate a report.")
-                raise ValueError("No documents found in the collection.")
-            log.debug(f"Retrieved {len(default_samples['documents'])} posts for analysis.")
-        except Exception as e:
-            log.error(f"Error retrieving data for brand voice report: {e}")
-            return f"Error retrieving data: {e}"
+        log.info("Getting default samples for brand voice report by calling query_brand_voice.")
+        
+        num_samples = int(os.getenv("N_SAMPLE_POSTS", 10))
+        # Use the now-fixed query_brand_voice with a wildcard to get the newest posts.
+        default_samples = self.query_brand_voice(query_text="*", n_results=num_samples)
 
+        if not default_samples:
+            log.error("No documents found in the collection to generate a report.")
+            return "No documents found in the collection."
+
+        # Format the selected newest samples into the final string
         sampled_content_str = "\n".join(
-            [f"- Caption: {doc}\n  Metadata: {meta}" for doc, meta in zip(default_samples['documents'], default_samples['metadatas'])]
+            [f"- Caption: {post['caption']}\n  Metadata: {post['metadata']}" for post in default_samples]
         )
         return sampled_content_str
 

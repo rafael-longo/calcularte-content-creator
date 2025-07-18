@@ -129,25 +129,28 @@ async def propose_content_plan(ctx: RunContextWrapper, plan_input: str) -> Conte
     return await _run_agent_as_streaming_tool(content_planner_agent, plan_input, ctx)
 
 @function_tool(name_override="generate_creative_ideas")
-async def generate_creative_ideas(ctx: RunContextWrapper, ideas_input: str) -> GeneratedIdeas:
+async def generate_creative_ideas(ctx: RunContextWrapper, ideas_input: str, brand_context: Optional[str] = None) -> GeneratedIdeas:
     """
     Brainstorms new, on-brand post ideas based on a content pillar and brand context. Use this to generate initial concepts.
     """
-    return await _run_agent_as_streaming_tool(creative_director_agent, ideas_input, ctx)
+    prompt = f"{ideas_input}\n\n{brand_context}" if brand_context else ideas_input
+    return await _run_agent_as_streaming_tool(creative_director_agent, prompt, ctx)
 
 @function_tool(name_override="write_post_caption")
-async def write_post_caption(ctx: RunContextWrapper, caption_input: str) -> str:
+async def write_post_caption(ctx: RunContextWrapper, caption_input: str, brand_context: Optional[str] = None) -> str:
     """
     Writes a compelling, empathetic, and valuable Instagram caption for a given post idea.
     """
-    return await _run_agent_as_streaming_tool(copywriter_agent, caption_input, ctx)
+    prompt = f"{caption_input}\n\n{brand_context}" if brand_context else caption_input
+    return await _run_agent_as_streaming_tool(copywriter_agent, prompt, ctx)
 
 @function_tool(name_override="create_image_prompts")
-async def create_image_prompts(ctx: RunContextWrapper, prompts_input: str) -> GeneratedImagePrompts:
+async def create_image_prompts(ctx: RunContextWrapper, prompts_input: str, brand_context: Optional[str] = None) -> GeneratedImagePrompts:
     """
     Translates a post concept and caption into a series of detailed, effective prompts for an image generation model.
     """
-    return await _run_agent_as_streaming_tool(art_director_agent, prompts_input, ctx)
+    prompt = f"{prompts_input}\n\n{brand_context}" if brand_context else prompts_input
+    return await _run_agent_as_streaming_tool(art_director_agent, prompt, ctx)
 
 @function_tool(name_override="refine_creative_content")
 async def refine_creative_content(ctx: RunContextWrapper, revision_input: str) -> str:

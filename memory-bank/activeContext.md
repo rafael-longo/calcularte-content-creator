@@ -32,10 +32,13 @@ The current focus has been on the successful implementation of the core backend 
     *   **`EvaluatorAgent` Enhanced:** Instructions were updated to include specific brand principles, making the quality control loop more aligned with Calcularte's core values.
     *   **`ArtDirectorAgent` Enhanced:** The agent's workflow was transformed into a two-step process: creating a visual storyboard and then generating prompts, allowing for more dynamic and narrative-driven carousel planning.
     *   **"Creative Wildcard" System Implemented:** A new `propose_wildcard_angle` tool was added to the `MaestroAgent`'s toolset, enabling the generation of unexpected and highly creative post angles to break out of creative ruts.
+*   **Fixed Post Retrieval Order:**
+    *   The `query_brand_voice` function in `src/agents_crew/brand_strategist.py` was updated to retrieve the newest posts from the vector database instead of the oldest when a wildcard query is used. This was achieved by fetching all posts, sorting them by timestamp, and then selecting the most recent ones.
+    *   The `get_samples_for_brand_voice_report` function was refactored to use the `query_brand_voice` function, ensuring consistent and correct post retrieval.
 
 ## 3. Next Steps
 
-With the first nine enhancements complete, the project will now proceed to the final item on the core enhancement roadmap.
+With the first nine enhancements and the post retrieval fix complete, the project will now proceed to the final item on the core enhancement roadmap.
 
 1.  **Implement Enhancement #11: Chain-of-Thought Logging via Streaming:** Make agents' internal reasoning transparent and observable.
     *   `docs/enhancement_plan_11_stream_chain_of_thought_logging.md`

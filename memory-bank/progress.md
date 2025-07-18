@@ -32,6 +32,7 @@
 *   **System-Wide Stability (`asyncio` fix):** A critical bug related to the `asyncio` event loop was identified and fixed across all agent-calling modules, ensuring stable operation within the synchronous CLI environment.
 *   **Autonomous Maestro Agent:** A `MaestroAgent` provides a single, conversational entry point to the system's capabilities. It uses an "Agents as Tools" architecture, orchestrating specialist agents and `FunctionTools` to fulfill high-level user prompts via the `maestro` CLI command.
 *   **Enhanced Agent Instructions and Creativity (Enhancement #9):** The system's creative and strategic capabilities have been significantly upgraded. The `MaestroAgent` is now more strategic, the `CreativeDirectorAgent` more varied, the `EvaluatorAgent` more brand-aligned, and the `ArtDirectorAgent` plans visual narratives. A new "Creative Wildcard" tool has been added to inject novel ideas into the workflow.
+*   **Post Retrieval Order:** The system now correctly retrieves the newest posts from the vector database. The `query_brand_voice` function now sorts posts by date when a wildcard query is used, and `get_samples_for_brand_voice_report` was refactored to use this function, ensuring that brand voice analysis is based on the most recent content.
 
 ## 2. What's Left to Build
 
