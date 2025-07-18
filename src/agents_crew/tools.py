@@ -5,11 +5,12 @@ from typing import Optional, List, Any, Dict
 
 from agents import function_tool, RunContextWrapper, Runner
 from src.agents_crew.brand_strategist import (
-    BrandStrategistAgent, 
-    BrandVoiceReport, 
+    BrandStrategistAgent,
+    BrandVoiceReport,
     ContentPlan,
     PostSample,
-    brand_reporter_agent, 
+    BrandContext,
+    brand_reporter_agent,
     content_planner_agent
 )
 from src.agents_crew.creative_director import creative_director_agent, GeneratedIdeas
@@ -129,27 +130,36 @@ async def propose_content_plan(ctx: RunContextWrapper, plan_input: str) -> Conte
     return await _run_agent_as_streaming_tool(content_planner_agent, plan_input, ctx)
 
 @function_tool(name_override="generate_creative_ideas")
-async def generate_creative_ideas(ctx: RunContextWrapper, ideas_input: str, brand_context: Optional[str] = None) -> GeneratedIdeas:
+async def generate_creative_ideas(ctx: RunContextWrapper, ideas_input: str, brand_context: Optional[BrandContext] = None) -> GeneratedIdeas:
     """
     Brainstorms new, on-brand post ideas based on a content pillar and brand context. Use this to generate initial concepts.
     """
-    prompt = f"{ideas_input}\n\n{brand_context}" if brand_context else ideas_input
+    context_str = ""
+    if brand_context:
+        context_str = f"\n\n--- Brand Context ---\n{brand_context.model_dump_json(indent=2)}\n--- End Context ---"
+    prompt = f"{ideas_input}{context_str}"
     return await _run_agent_as_streaming_tool(creative_director_agent, prompt, ctx)
 
 @function_tool(name_override="write_post_caption")
-async def write_post_caption(ctx: RunContextWrapper, caption_input: str, brand_context: Optional[str] = None) -> str:
+async def write_post_caption(ctx: RunContextWrapper, caption_input: str, brand_context: Optional[BrandContext] = None) -> str:
     """
     Writes a compelling, empathetic, and valuable Instagram caption for a given post idea.
     """
-    prompt = f"{caption_input}\n\n{brand_context}" if brand_context else caption_input
+    context_str = ""
+    if brand_context:
+        context_str = f"\n\n--- Brand Context ---\n{brand_context.model_dump_json(indent=2)}\n--- End Context ---"
+    prompt = f"{caption_input}{context_str}"
     return await _run_agent_as_streaming_tool(copywriter_agent, prompt, ctx)
 
 @function_tool(name_override="create_image_prompts")
-async def create_image_prompts(ctx: RunContextWrapper, prompts_input: str, brand_context: Optional[str] = None) -> GeneratedImagePrompts:
+async def create_image_prompts(ctx: RunContextWrapper, prompts_input: str, brand_context: Optional[BrandContext] = None) -> GeneratedImagePrompts:
     """
     Translates a post concept and caption into a series of detailed, effective prompts for an image generation model.
     """
-    prompt = f"{prompts_input}\n\n{brand_context}" if brand_context else prompts_input
+    context_str = ""
+    if brand_context:
+        context_str = f"\n\n--- Brand Context ---\n{brand_context.model_dump_json(indent=2)}\n--- End Context ---"
+    prompt = f"{prompts_input}{context_str}"
     return await _run_agent_as_streaming_tool(art_director_agent, prompt, ctx)
 
 @function_tool(name_override="refine_creative_content")

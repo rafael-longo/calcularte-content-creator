@@ -48,6 +48,10 @@ class PostSample(BaseModel):
     caption: str
     metadata: PostMetadata
 
+class BrandContext(BaseModel):
+    report: BrandVoiceReport
+    samples: List[PostSample]
+
 # --- Agent Definitions ---
 
 content_planner_agent = Agent(
