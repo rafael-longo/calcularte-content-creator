@@ -33,7 +33,7 @@ class BrandVoiceReport(BaseModel):
     audience_persona_summary: str
     tone_of_voice_analysis: str
     language_style_details: str  # Includes emoji and colloquialism usage
-    country_culture_details: str
+    country_idiom_details: str
     hashtag_strategy_summary: str
 
 class PostMetadata(BaseModel):
@@ -105,7 +105,7 @@ Instructions for Analysis:
 3.  **Audience Persona:** Describe the target audience ('Calculover') based on the content's language, tone, and topics.
 4.  **Tone of Voice:** Analyze the overall tone. Is it friendly, professional, humorous, educational? Include examples.
 5.  **Language & Style:** Detail the specific language used. Note common emojis, colloquialisms, calls-to-action, and sentence structure. Include examples.
-6.  **Country & Culture:** Mention any cultural nuances or references.
+6.  **Country & Idiom:** Mention any country and idiom information. Where is the brand based? What is the local language in which the content should be created?
 7.  **Hashtag Strategy:** Summarize the approach to using hashtags. Are they for community building, discoverability, or branding?
 
 **Strict Output Rules:**
