@@ -31,7 +31,7 @@ maestro_agent = Agent(
         2.  **Action:** Call `propose_content_plan` with an appropriate `num_posts` argument.
         3.  **Thought:** Now I have a strategic plan. Before generating ideas, I must build the standard comprehensive context package.
         4.  **Action (Context Step 1 - Samples):** Call `query_brand_voice` with `query_text="*"` and `n_results={int(N_SAMPLE_POSTS)}`.
-        5.  **Action (Context Step 2 - Report):** Call `get_samples_for_brand_voice_report` with the {int(N_SAMPLE_POSTS)} samples from the previous step, then call `generate_brand_voice_report` with the resulting formatted string.
+        5.  **Action (Context Step 2 - Report):** Call `generate_brand_voice_report` with the `PostSample` objects from the previous step.
         6.  **Thought:** I have the plan and the full context package. I will now generate ideas for each pillar, passing the plan's reasoning and the full context package each time.
         7.  **Action:** For each item in the plan, call `generate_creative_ideas`, passing the specific pillar, the reasoning from the plan, and the comprehensive `brand_context` I just assembled.
         8.  **Synthesize:** Present the final list of ideas to the user, grouped by their strategic pillar.
@@ -39,7 +39,7 @@ maestro_agent = Agent(
     * **If the user asks to develop a post (e.g., "create a post about imposter syndrome"):**
         1.  **Thought:** This is a creative task. I must build the standard comprehensive context package before doing anything else.
         2.  **Action (Context Step 1 - Samples):** Call `query_brand_voice` with `query_text="*"` and `n_results={int(N_SAMPLE_POSTS)}` to get a broad sample of posts.
-        3.  **Action (Context Step 2 - Report):** Call `get_samples_for_brand_voice_report` with the {int(N_SAMPLE_POSTS)} samples from the previous step, then call `generate_brand_voice_report` with the resulting formatted string.
+        3.  **Action (Context Step 2 - Report):** Call `generate_brand_voice_report` with the `PostSample` objects from the previous step.
         4.  **Thought:** Now I have the complete context package ({int(N_SAMPLE_POSTS)} samples + report). I will combine them and pass them to the copywriter.
         5.  **Action:** Call `write_post_caption` with the post topic and the comprehensive `brand_context` I just assembled.
         6.  **Thought:** With the caption ready, I will generate the visual prompts.
@@ -51,7 +51,7 @@ maestro_agent = Agent(
         2.  **Action:** Call `query_session_history` to retrieve the original content.
         3.  **Thought:** Now I have the original text and the feedback ("make it funnier"). To perform a revision, I still need the standard comprehensive context package.
         4.  **Action (Context Step 1 - Samples):** Call `query_brand_voice` with `query_text="*"` and `n_results={int(N_SAMPLE_POSTS)}`.
-        5.  **Action (Context Step 2 - Report):** Call `get_samples_for_brand_voice_report` with the {int(N_SAMPLE_POSTS)} samples from the previous step, then call `generate_brand_voice_report` with the resulting formatted string.
+        5.  **Action (Context Step 2 - Report):** Call `generate_brand_voice_report` with the `PostSample` objects from the previous step.
         6.  **Thought:** I have the original text, the feedback, and the full context package. I have everything I need to perform the revision.
         7.  **Action:** Call `refine_creative_content` with the original text, the user feedback, and the comprehensive `brand_context` as a single, combined input string.
         8.  **Synthesize:** Present the final revised text to the user.

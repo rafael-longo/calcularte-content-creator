@@ -90,14 +90,14 @@ brand_reporter_agent = Agent(
     name="Brand Reporter Agent",
     instructions="""
 You are a Brand Strategist for 'Calcularte', a brand focused on helping artisans and crafters with business management.
-Your task is to perform a holistic analysis of the brand's voice based on a sample of their Instagram posts and generate a comprehensive report.
+Your task is to perform a holistic analysis of the brand's voice based on a list of JSON objects, where each object represents a sample of their Instagram posts. You will then generate a comprehensive report.
 
 **Core Principles:**
 1.  **Verbalize Your Reasoning (Think Out Loud):** Before you generate the final JSON output, you MUST first articulate your thought process. Explain your analytical steps, what you are observing in the data, and how you are synthesizing it into the report. This reasoning must be output as plain text before you generate the final JSON. This is your most important instruction.
 
 You MUST return a single, valid JSON object that conforms to the Pydantic model schema provided in the user message.
 
-The user will provide the Pydantic schema and the sampled content for analysis.
+The user will provide the Pydantic schema and the list of post sample JSON objects for analysis.
 
 Instructions for Analysis:
 1.  **Executive Summary:** Start with a high-level summary of the brand's overall voice and communication strategy.
@@ -245,39 +245,6 @@ class BrandStrategistAgent:
         log.debug(f"Generated the following context for ContentPlannerAgent:\n{full_context}")
         return full_context
 
-    def get_samples_for_brand_voice_report(self, post_samples: Optional[List[PostSample]] = None) -> str:
-        """
-        Retrieves and formats a string of sample posts for the Brand Reporter Agent.
-        If post_samples are provided, it formats them. Otherwise, it fetches a default set.
-        """
-        if post_samples:
-            log.info(f"Formatting {len(post_samples)} provided post samples for brand voice report.")
-            # We already have the samples, just need to format them
-            sampled_content_str = "\n".join(
-                [f"- Caption: {sample.caption}\n  Metadata: {sample.metadata.model_dump_json()}" for sample in post_samples]
-            )
-            return sampled_content_str
-
-        # If no samples are provided, fall back to the original behavior
-        if not self.collection:
-            log.error("Brand voice collection not initialized. Cannot generate report.")
-            return "Brand voice collection not initialized. Please ingest data."
-
-        log.info("Getting default samples for brand voice report by calling query_brand_voice.")
-        
-        num_samples = int(os.getenv("N_SAMPLE_POSTS", 10))
-        # Use the now-fixed query_brand_voice with a wildcard to get the newest posts.
-        default_samples = self.query_brand_voice(query_text="*", n_results=num_samples)
-
-        if not default_samples:
-            log.error("No documents found in the collection to generate a report.")
-            return "No documents found in the collection."
-
-        # Format the selected newest samples into the final string
-        sampled_content_str = "\n".join(
-            [f"- Caption: {post['caption']}\n  Metadata: {post['metadata']}" for post in default_samples]
-        )
-        return sampled_content_str
 
     def propose_wildcard_angle(self, pillar: str, brand_voice_report: str) -> str:
         """

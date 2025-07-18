@@ -59,13 +59,6 @@ def get_context_for_content_plan(ctx: RunContextWrapper, time_frame: Optional[st
         num_posts=num_posts
     )
 
-@function_tool(name_override="get_samples_for_brand_voice_report")
-def get_samples_for_brand_voice_report(ctx: RunContextWrapper, post_samples: Optional[List[PostSample]] = None) -> str:
-    """
-    Retrieves and formats a string of sample posts for the Brand Reporter Agent.
-    If post_samples are provided, it formats them. Otherwise, it fetches a default set.
-    """
-    return brand_strategist.get_samples_for_brand_voice_report(post_samples=post_samples)
 
 @function_tool(name_override="get_specialized_context")
 def get_specialized_context(ctx: RunContextWrapper, context_type: str, query: str, num_samples: int = 3) -> List[str]:
@@ -116,10 +109,12 @@ async def propose_wildcard_angle(ctx: RunContextWrapper, pillar: str) -> str:
 # --- New Agent-as-Tool Implementations ---
 
 @function_tool(name_override="generate_brand_voice_report")
-async def generate_brand_voice_report(ctx: RunContextWrapper, analysis_input: str) -> BrandVoiceReport:
+async def generate_brand_voice_report(ctx: RunContextWrapper, post_samples: List[PostSample]) -> BrandVoiceReport:
     """
-    Analyzes a string of sample posts and generates a comprehensive report on the brand's voice, tone, style, and content pillars.
+    Analyzes a list of sample posts and generates a comprehensive report on the brand's voice, tone, style, and content pillars.
     """
+    # The agent expects a string, so we serialize the list of Pydantic models into a JSON string.
+    analysis_input = f"Here are the post samples to analyze:\n{ [sample.model_dump_json() for sample in post_samples] }"
     return await _run_agent_as_streaming_tool(brand_reporter_agent, analysis_input, ctx)
 
 @function_tool(name_override="propose_content_plan")
@@ -182,7 +177,6 @@ async def query_session_history(ctx: RunContextWrapper, query_input: str) -> str
 
 maestro_tools = [
     get_context_for_content_plan,
-    get_samples_for_brand_voice_report,
     get_specialized_context,
     query_brand_voice,
     propose_wildcard_angle,
