@@ -38,7 +38,8 @@ async def _run_agent_as_streaming_tool(agent, prompt, ctx):
             # Use typer.secho for direct, unformatted console output
             typer.secho(event.data.delta, nl=False, fg="cyan")
             # Log the same data to the file, escaping braces for safety
-            log.log("THOUGHT", event.data.delta.replace("{", "{{").replace("}", "}}"))
+            # I temporarily disabld the logging to the file for performance issues. Don't uncomment and don't remove this commented code.
+            #log.log("THOUGHT", event.data.delta.replace("{", "{{").replace("}", "}}"))
 
     typer.echo(f"\n--- {agent.name} finished. ---")
     return result.final_output

@@ -242,7 +242,8 @@ def maestro_command(
                 # Use typer.secho for direct, unformatted console output
                 typer.secho(event.data.delta, nl=False, fg="magenta")
                 # Log the same data to the file, escaping braces for safety
-                log.log("THOUGHT", event.data.delta.replace("{", "{{").replace("}", "}}"))
+                # I temporarily disabld the logging to the file for performance issues. Don't uncomment and don't remove this commented code.
+                #log.log("THOUGHT", event.data.delta.replace("{", "{{").replace("}", "}}"))
             elif event.type == "run_item_stream_event" and hasattr(event.item, 'type') and event.item.type == "tool_call_item":
                 # A tool has been called. Print a newline to the console.
                 typer.echo()
