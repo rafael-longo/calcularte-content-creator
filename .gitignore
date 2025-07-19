@@ -39,3 +39,5 @@ Thumbs.db
 # Session state
 sessions.db
 .active_session
+sessions.db-wal
+sessions.db-shm

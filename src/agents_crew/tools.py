@@ -29,17 +29,33 @@ async def _run_agent_as_streaming_tool(agent, prompt, ctx):
     log.info(f"Maestro is calling a sub-agent: {agent.name}")
     typer.echo(f"\n\n--- Calling {agent.name}... ---")
     
+    thought_buffer = "" # Buffer to accumulate thought chunks
+
     # The session is implicitly managed by the Runner when a tool is called.
     # We don't need to (and cannot) pass it explicitly here.
     result = Runner.run_streamed(agent, prompt)
     
     async for event in result.stream_events():
         if event.type == "raw_response_event" and hasattr(event.data, 'delta') and event.data.delta:
+            # Accumulate the thought chunks
+            thought_buffer += event.data.delta
             # Use typer.secho for direct, unformatted console output
             typer.secho(event.data.delta, nl=False, fg="cyan")
-            # Log the same data to the file, escaping braces for safety
-            # I temporarily disabld the logging to the file for performance issues. Don't uncomment and don't remove this commented code.
-            #log.log("THOUGHT", event.data.delta.replace("{", "{{").replace("}", "}}"))
+        
+        # Log the complete thought when a new run item is processed (signaling the end of a thought)
+        elif event.type == "run_item_stream_event":
+            if thought_buffer:
+                log.log("THOUGHT", thought_buffer.replace("{", "{{").replace("}", "}}"))
+                thought_buffer = "" # Reset buffer
+            
+            # If the item is a tool call, log it for clarity
+            if hasattr(event.item, 'type') and event.item.type == "tool_call_item":
+                typer.echo() # Newline for console
+                log.info(f"Sub-agent tool call: {event.item.raw_item.name} with args: {event.item.raw_item.arguments}")
+
+    # Log any remaining thoughts in the buffer after the loop finishes
+    if thought_buffer:
+        log.log("THOUGHT", thought_buffer.replace("{", "{{").replace("}", "}}"))
 
     typer.echo(f"\n--- {agent.name} finished. ---")
     return result.final_output

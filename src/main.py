@@ -235,20 +235,31 @@ def maestro_command(
 
     async def stream_maestro():
         final_output = None
+        thought_buffer = "" # Buffer to accumulate thought chunks
+
         # Use run_streamed() which returns a result object, then iterate over stream_events()
         result = Runner.run_streamed(maestro_agent, prompt, session=session, max_turns=10)
         async for event in result.stream_events():
             if event.type == "raw_response_event" and hasattr(event.data, 'delta') and event.data.delta:
+                # Accumulate the thought chunks
+                thought_buffer += event.data.delta
                 # Use typer.secho for direct, unformatted console output
                 typer.secho(event.data.delta, nl=False, fg="magenta")
-                # Log the same data to the file, escaping braces for safety
-                # I temporarily disabld the logging to the file for performance issues. Don't uncomment and don't remove this commented code.
-                #log.log("THOUGHT", event.data.delta.replace("{", "{{").replace("}", "}}"))
+            
+            # Log the complete thought when a tool is called (signaling the end of a thought)
             elif event.type == "run_item_stream_event" and hasattr(event.item, 'type') and event.item.type == "tool_call_item":
+                if thought_buffer:
+                    log.log("THOUGHT", thought_buffer.replace("{", "{{").replace("}", "}}"))
+                    thought_buffer = "" # Reset buffer
+
                 # A tool has been called. Print a newline to the console.
                 typer.echo()
                 # Access the tool call info from the raw_item attribute
                 log.info(f"Tool Call: {event.item.raw_item.name} with args: {event.item.raw_item.arguments}")
+
+        # Log any remaining thoughts in the buffer after the loop finishes
+        if thought_buffer:
+            log.log("THOUGHT", thought_buffer.replace("{", "{{").replace("}", "}}"))
 
         return result.final_output
 
