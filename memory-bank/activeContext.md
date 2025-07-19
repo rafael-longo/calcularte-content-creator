@@ -35,6 +35,13 @@ The current focus has been on the successful implementation of the core backend 
 *   **Fixed Post Retrieval Order:**
     *   The `query_brand_voice` function in `src/agents_crew/brand_strategist.py` was updated to retrieve the newest posts from the vector database instead of the oldest when a wildcard query is used. This was achieved by fetching all posts, sorting them by timestamp, and then selecting the most recent ones.
     *   The `get_samples_for_brand_voice_report` function was refactored to use the `query_brand_voice` function, ensuring consistent and correct post retrieval.
+*   **Implemented Structured Data-Passing Protocol:**
+    *   **Problem:** The Maestro was summarizing complex creative ideas into simple strings, causing a significant loss of quality and context when passing tasks to specialist agents.
+    *   **Solution:** The entire creative workflow was refactored to use Pydantic models for data exchange, creating a lossless communication protocol.
+        *   The `write_post_caption` tool was updated to accept a `PostIdea` object, ensuring the Copywriter receives the full creative brief.
+        *   A new `ArtDirectorInput` model was created to bundle the `PostIdea` and the final `caption`.
+        *   The `create_image_prompts` tool was updated to accept the `ArtDirectorInput` object, giving the Art Director complete strategic and narrative context.
+    *   **Impact:** This change fundamentally improves the reliability and quality of the content generation process by eliminating information degradation between agent steps.
 
 ## 3. Next Steps
 
@@ -47,6 +54,6 @@ With the first nine enhancements and the post retrieval fix complete, the projec
 ## 4. Key Decisions and Considerations
 
 *   **"Agents as Tools" as the Primary Orchestration Pattern:** The implementation of the `MaestroAgent` solidifies the "Agents as Tools" pattern as the primary strategy for autonomous orchestration. The Maestro agent reasons and calls specialist tools, rather than relying on hard-coded Python logic.
-*   **Structured Outputs:** Leveraging Pydantic models for structured outputs from agents simplifies data handling and ensures consistency.
+*   **Structured Data-Passing as the Core Communication Protocol:** The decision to use Pydantic models for passing data between the Maestro and specialist agents is now a core architectural principle. This ensures high-fidelity, lossless communication and is the preferred method for all future agent interactions.
 *   **Modular Agent Design:** The clear separation of concerns among agents facilitates development, testing, and future modifications.
 *   **Synchronous Wrapper for Async Operations:** The `asyncio.run()` pattern has been established as the correct way to call async agent functions from the synchronous Typer CLI, ensuring stability. This is a critical pattern to maintain for future development.
