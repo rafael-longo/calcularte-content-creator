@@ -238,7 +238,7 @@ def maestro_command(
         thought_buffer = "" # Buffer to accumulate thought chunks
 
         # Use run_streamed() which returns a result object, then iterate over stream_events()
-        result = Runner.run_streamed(maestro_agent, prompt, session=session, max_turns=10)
+        result = Runner.run_streamed(maestro_agent, prompt, session=session, max_turns=20)
         async for event in result.stream_events():
             if event.type == "raw_response_event" and hasattr(event.data, 'delta') and event.data.delta:
                 # Accumulate the thought chunks
